@@ -94,7 +94,7 @@ def _load_cube_and_meta(
 
 
 def _apply_bad_band_rule(
-    cube: np.ndarray,
+    cube: np.ndarray | None,
     wavelengths: Optional[np.ndarray],
     sensor: str,
 ):
@@ -113,6 +113,107 @@ def _apply_bad_band_rule(
         wavelengths = wavelengths[keep_indices]
 
     return cube, wavelengths
+
+
+def load_preview_cube(
+    *,
+    input_path: str,
+    sensor: str,
+    row_start: int | None = None,
+    row_stop: int | None = None,
+    col_start: int | None = None,
+    col_stop: int | None = None,
+    xmin: float | None = None,
+    ymin: float | None = None,
+    xmax: float | None = None,
+    ymax: float | None = None,
+):
+    sensor = _infer_sensor(sensor, input_path)
+    cube, _meta = _load_cube_and_meta(
+        input_path=input_path,
+        sensor=sensor,
+        row_start=row_start,
+        row_stop=row_stop,
+        col_start=col_start,
+        col_stop=col_stop,
+        xmin=xmin,
+        ymin=ymin,
+        xmax=xmax,
+        ymax=ymax,
+    )
+    cube, _ = _apply_bad_band_rule(cube, None, sensor)
+    return cube
+
+
+def make_pseudocolor_png_from_cube(
+    *,
+    cube: np.ndarray,
+    out_png: Path,
+    rgb_bands: tuple[int, int, int] = (3, 9, 17),
+):
+    if cube is None:
+        return
+
+    c, h, w = cube.shape
+    r_idx = min(max(rgb_bands[0], 0), c - 1)
+    g_idx = min(max(rgb_bands[1], 0), c - 1)
+    b_idx = min(max(rgb_bands[2], 0), c - 1)
+
+    rgb = np.stack(
+        [
+            _stretch_band(cube[r_idx]),
+            _stretch_band(cube[g_idx]),
+            _stretch_band(cube[b_idx]),
+        ],
+        axis=-1,
+    )
+
+    out_png.parent.mkdir(parents=True, exist_ok=True)
+    plt.imsave(out_png, rgb)
+
+
+def make_probability_png(
+    *,
+    prob_map_npy: Path,
+    out_png: Path,
+):
+    arr = np.load(prob_map_npy)
+    arr = _normalize01(arr)
+    out_png.parent.mkdir(parents=True, exist_ok=True)
+    plt.imsave(out_png, arr, cmap="viridis", vmin=0.0, vmax=1.0)
+
+
+def make_probability_overlay_png(
+    *,
+    prob_map_npy: Path,
+    pseudocolor_png: Path,
+    out_png: Path,
+    alpha: float = 0.45,
+):
+    if not prob_map_npy.exists() or not pseudocolor_png.exists():
+        return
+
+    prob = np.load(prob_map_npy).astype(np.float32)
+    prob = _normalize01(prob)
+
+    base = plt.imread(pseudocolor_png).astype(np.float32)
+    if base.ndim == 2:
+        base = np.stack([base, base, base], axis=-1)
+    if base.shape[-1] == 4:
+        base = base[..., :3]
+
+    heat = plt.cm.viridis(prob)[..., :3].astype(np.float32)
+
+    if base.shape[:2] != heat.shape[:2]:
+        raise ValueError(
+            f"Shape mismatch in overlay: base={base.shape[:2]} heat={heat.shape[:2]}"
+        )
+
+    overlay = (1.0 - alpha) * base + alpha * heat
+    overlay = np.clip(overlay, 0.0, 1.0)
+
+    out_png.parent.mkdir(parents=True, exist_ok=True)
+    plt.imsave(out_png, overlay)
 
 
 def _resolve_preview_band(
