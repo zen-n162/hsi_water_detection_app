@@ -3,8 +3,10 @@ export async function runInference(formData: FormData) {
     method: "POST",
     body: formData,
   });
+
   if (!res.ok) {
     throw new Error(`API error: ${res.status}`);
   }
+
   return await res.json();
 }

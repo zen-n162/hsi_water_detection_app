@@ -1,121 +1,128 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState } from "react";
+import Dropzone from "./components/Dropzone";
+import { runInference } from "./lib/api";
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [hsiFile, setHsiFile] = useState<File | null>(null);
+  const [wavelengthFile, setWavelengthFile] = useState<File | null>(null);
+  const [sensor, setSensor] = useState("hyperion");
+  const [device, setDevice] = useState("cuda");
+  const [xmin, setXmin] = useState("563000");
+  const [ymin, setYmin] = useState("1405000");
+  const [xmax, setXmax] = useState("567000");
+  const [ymax, setYmax] = useState("1409000");
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleRun = async () => {
+    if (!hsiFile) {
+      alert("HSI file is required");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("hsi_file", hsiFile);
+
+    if (wavelengthFile) {
+      formData.append("wavelength_file", wavelengthFile);
+    }
+
+    formData.append("sensor", sensor);
+    formData.append("device", device);
+    formData.append("xmin", xmin);
+    formData.append("ymin", ymin);
+    formData.append("xmax", xmax);
+    formData.append("ymax", ymax);
+    formData.append("patch_size", "64");
+    formData.append("stride", "32");
+
+    setLoading(true);
+    setResult(null);
+
+    try {
+      const res = await runInference(formData);
+      setResult(res);
+    } catch (error) {
+      console.error(error);
+      alert("Inference failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
+    <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "24px", fontFamily: "sans-serif" }}>
+      <h1>HSI Water Detection UI</h1>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
         <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+          <Dropzone
+            label="HSI file"
+            onFileSelected={setHsiFile}
+            selectedFile={hsiFile}
+          />
+          <Dropzone
+            label="Wavelength sidecar (optional)"
+            onFileSelected={setWavelengthFile}
+            selectedFile={wavelengthFile}
+          />
 
-      <div className="ticks"></div>
+          <div style={{ marginBottom: "12px" }}>
+            <label>Sensor: </label>
+            <select value={sensor} onChange={(e) => setSensor(e.target.value)}>
+              <option value="hyperion">hyperion</option>
+              <option value="hisui">hisui</option>
+              <option value="generic">generic</option>
+              <option value="auto">auto</option>
+            </select>
+          </div>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+          <div style={{ marginBottom: "12px" }}>
+            <label>Device: </label>
+            <select value={device} onChange={(e) => setDevice(e.target.value)}>
+              <option value="cuda">cuda</option>
+              <option value="cpu">cpu</option>
+            </select>
+          </div>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "16px" }}>
+            <input value={xmin} onChange={(e) => setXmin(e.target.value)} placeholder="xmin" />
+            <input value={xmax} onChange={(e) => setXmax(e.target.value)} placeholder="xmax" />
+            <input value={ymin} onChange={(e) => setYmin(e.target.value)} placeholder="ymin" />
+            <input value={ymax} onChange={(e) => setYmax(e.target.value)} placeholder="ymax" />
+          </div>
+
+          <button onClick={handleRun} disabled={loading} style={{ padding: "10px 18px" }}>
+            {loading ? "Running..." : "Run Inference"}
+          </button>
+        </div>
+
+        <div>
+          <h2>Result</h2>
+          {!result && <div>No result yet.</div>}
+          {result && (
+            <div style={{ fontSize: "0.95rem" }}>
+              <div><strong>Success:</strong> {String(result.ok)}</div>
+              <div><strong>Output dir:</strong> {result.output_dir}</div>
+
+              <h3>Files</h3>
+              <pre style={{ whiteSpace: "pre-wrap", background: "#f5f5f5", padding: "12px", borderRadius: "8px" }}>
+                {JSON.stringify(result.files, null, 2)}
+              </pre>
+
+              <h3>Stdout</h3>
+              <pre style={{ whiteSpace: "pre-wrap", background: "#f5f5f5", padding: "12px", borderRadius: "8px", maxHeight: "260px", overflow: "auto" }}>
+                {result.stdout}
+              </pre>
+
+              <h3>Stderr</h3>
+              <pre style={{ whiteSpace: "pre-wrap", background: "#f5f5f5", padding: "12px", borderRadius: "8px", maxHeight: "260px", overflow: "auto" }}>
+                {result.stderr}
+              </pre>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
-
-export default App

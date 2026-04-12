@@ -3,9 +3,10 @@ import React, { useRef } from "react";
 type Props = {
   label: string;
   onFileSelected: (file: File | null) => void;
+  selectedFile?: File | null;
 };
 
-export default function Dropzone({ label, onFileSelected }: Props) {
+export default function Dropzone({ label, onFileSelected, selectedFile }: Props) {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -30,16 +31,21 @@ export default function Dropzone({ label, onFileSelected }: Props) {
       style={{
         display: "block",
         border: "2px dashed #888",
-        padding: "24px",
+        padding: "20px",
         borderRadius: "12px",
         cursor: "pointer",
         marginBottom: "16px",
+        background: "#fafafa",
       }}
     >
-      <div>{label}</div>
+      <div style={{ fontWeight: 600, marginBottom: "6px" }}>{label}</div>
       <div style={{ fontSize: "0.9rem", color: "#666" }}>
         Drag and drop or click to select
       </div>
+      <div style={{ marginTop: "8px", fontSize: "0.9rem" }}>
+        {selectedFile ? `Selected: ${selectedFile.name}` : "No file selected"}
+      </div>
+
       <input
         ref={inputRef}
         type="file"
