@@ -1,0 +1,46 @@
+{
+  "sample_id": "sample_0003",
+  "scene_id": "EO1H0581152011356110P1_crop_rm_badbands",
+  "input_path": "/home/zennakamura/MasterResearch/HyperSIGMA/HyperspectralDetection/Datasets/EO1H0581152011356110P1_1GST/EO1H0581152011356110P1_crop_rm_badbands.tif",
+  "sensor": "hyperion",
+  "roi": {
+    "row_start": 100,
+    "row_stop": 164,
+    "col_start": 900,
+    "col_stop": 964
+  },
+  "label": "wet",
+  "confidence": 0.8,
+  "meta": {
+    "sensor": "hyperion",
+    "crs": "PROJCS[\"WGS 84 / UTM zone 57S\",GEOGCS[\"WGS 84\",DATUM[\"World Geodetic System 1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",159],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",10000000],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+    "transform": [
+      21.32925627845108,
+      -21.08029426057055,
+      555818.0977911504,
+      21.08029426057055,
+      21.32925627845108,
+      1393596.3726005747,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "width": 64,
+    "height": 64,
+    "bands": 170,
+    "dtype": "int16",
+    "wavelengths_nm": null,
+    "fwhm_nm": null,
+    "bad_band_mask": "[ True  True  True  True  True  True  True False False False False False\n False False False False False False False False False False False False\n False False False False False False False False False False False False\n False False False False False False False False False False False False\n False False False False False False False False False  True  True  True\n  True  True  True  True  True  True  True  True  True  True  True  True\n  True  True  True  True False False False False False False False False\n False False False False False False False False False False False False\n False False False False False False False False False False False False\n False False False False False False False False False False False False\n False False False False False False False False False False False False\n False False False False False False False False False False False False\n False False False False False False False False False False False False\n False False False False False False False False False False False False\n False False]",
+    "band_names": null,
+    "source_path": "/home/zennakamura/MasterResearch/HyperSIGMA/HyperspectralDetection/Datasets/EO1H0581152011356110P1_1GST/EO1H0581152011356110P1_crop_rm_badbands.tif",
+    "header_path": null,
+    "roi": {
+      "mode": "pixel",
+      "row_start": 100,
+      "row_stop": 164,
+      "col_start": 900,
+      "col_stop": 964
+    }
+  }
+}
