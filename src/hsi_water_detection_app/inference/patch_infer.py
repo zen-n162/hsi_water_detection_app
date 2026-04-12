@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
@@ -19,7 +19,7 @@ def generate_patches(
 
     Returns a list of dicts:
     {
-        "patch": np.ndarray,
+        "patch": np.ndarray,  # (C,H,W)
         "top": int,
         "left": int,
         "height": int,
@@ -60,14 +60,22 @@ def infer_patches(
     model: Any,
     patches: List[PatchInfo],
     device: str = "cpu",
+    target_signature: Optional[np.ndarray] = None,
 ) -> List[PatchPrediction]:
     """
-    Dummy patch inference.
+    Real patch inference path when model provides .infer_patch(...).
+    Falls back to dummy outputs if model is a placeholder dict.
 
-    For now:
-    - returns zero probability maps
-    - returns zero spatial attention
-    - returns zero spectral attention
+    Returns per patch:
+    {
+        "top": int,
+        "left": int,
+        "height": int,
+        "width": int,
+        "prob_map": np.ndarray (H,W),
+        "spatial_attn": np.ndarray (H,W),
+        "spectral_attn": np.ndarray (K,),
+    }
     """
     if not patches:
         print("[INFO] infer_patches skipped because no patches were generated")
@@ -75,27 +83,51 @@ def infer_patches(
 
     outputs: List[PatchPrediction] = []
 
-    for item in patches:
-        h = item["height"]
-        w = item["width"]
-        patch = item["patch"]
-        bands = patch.shape[0]
+    # Dummy fallback
+    if isinstance(model, dict) and model.get("status") == "dummy_model":
+        for item in patches:
+            h = item["height"]
+            w = item["width"]
+            patch = item["patch"]
+            bands = patch.shape[0]
 
-        prob_map = np.zeros((h, w), dtype=np.float32)
-        spatial_attn = np.zeros((h, w), dtype=np.float32)
-        spectral_attn = np.zeros((bands,), dtype=np.float32)
+            outputs.append(
+                {
+                    "top": item["top"],
+                    "left": item["left"],
+                    "height": h,
+                    "width": w,
+                    "prob_map": np.zeros((h, w), dtype=np.float32),
+                    "spatial_attn": np.zeros((h, w), dtype=np.float32),
+                    "spectral_attn": np.zeros((bands,), dtype=np.float32),
+                }
+            )
+        print(f"[INFO] infer_patches finished on {len(outputs)} patches (dummy fallback, device={device})")
+        return outputs
+
+    # Real path
+    if not hasattr(model, "infer_patch"):
+        raise AttributeError("Model object does not have infer_patch(...)")
+
+    for item in patches:
+        patch = item["patch"]  # (C,H,W)
+        result = model.infer_patch(
+            patch,
+            target_signature=target_signature,
+            return_attn=True,
+        )
 
         outputs.append(
             {
                 "top": item["top"],
                 "left": item["left"],
-                "height": h,
-                "width": w,
-                "prob_map": prob_map,
-                "spatial_attn": spatial_attn,
-                "spectral_attn": spectral_attn,
+                "height": item["height"],
+                "width": item["width"],
+                "prob_map": result["prob_map"],
+                "spatial_attn": result["spatial_attn"],
+                "spectral_attn": result["spectral_attn"],
             }
         )
 
-    print(f"[INFO] infer_patches finished on {len(outputs)} patches (device={device})")
+    print(f"[INFO] infer_patches finished on {len(outputs)} patches (real model, device={device})")
     return outputs

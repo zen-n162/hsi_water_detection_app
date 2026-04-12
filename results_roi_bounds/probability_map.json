@@ -1,0 +1,45 @@
+{
+  "input": "/home/zennakamura/MasterResearch/HyperSIGMA/HyperspectralDetection/Datasets/EO1H0581152011356110P1_1GST/EO1H0581152011356110P1_L1GST.tif",
+  "header": "/home/zennakamura/MasterResearch/hsi_water_detection_app/metadata/hyperion_wavelengths.csv",
+  "model_checkpoint": "dummy.pth",
+  "device": "cuda",
+  "meta": {
+    "input_path": "/home/zennakamura/MasterResearch/HyperSIGMA/HyperspectralDetection/Datasets/EO1H0581152011356110P1_1GST/EO1H0581152011356110P1_L1GST.tif",
+    "status": "loaded_bounds",
+    "format": "GTiff",
+    "width": 133,
+    "height": 133,
+    "count": 242,
+    "dtype": "int16",
+    "crs": "PROJCS[\"WGS 84 / UTM zone 57S\",GEOGCS[\"WGS 84\",DATUM[\"World Geodetic System 1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",159],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",10000000],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+    "transform": [
+      29.988597491448118,
+      0.0,
+      562998.6316989738,
+      0.0,
+      -29.98868351565447,
+      1409025.5375330064,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "bounds": {
+      "xmin": 563000.0,
+      "ymin": 1405000.0,
+      "xmax": 567000.0,
+      "ymax": 1409000.0
+    }
+  },
+  "crs": "PROJCS[\"WGS 84 / UTM zone 57S\",GEOGCS[\"WGS 84\",DATUM[\"World Geodetic System 1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",159],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",10000000],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+  "transform": [
+    29.988597491448118,
+    0.0,
+    562998.6316989738,
+    0.0,
+    -29.98868351565447,
+    1409025.5375330064,
+    0.0,
+    0.0,
+    1.0
+  ]
+}

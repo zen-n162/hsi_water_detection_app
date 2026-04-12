@@ -6,13 +6,29 @@ from hsi_water_detection_app.config import (
     DEFAULT_STRIDE,
     HYPERION_BAD_BANDS_0BASED,
 )
-from hsi_water_detection_app.data.loader import load_hsi_cube, parse_header_wavelengths
+from hsi_water_detection_app.data.loader import (
+    load_hsi_cube,
+    load_hsi_window,
+    parse_header_wavelengths,
+)
 from hsi_water_detection_app.data.preprocessing import normalize_cube, remove_bad_bands
 from hsi_water_detection_app.inference.patch_infer import generate_patches, infer_patches
-from hsi_water_detection_app.inference.reconstruct import reconstruct_from_patches
+from hsi_water_detection_app.inference.reconstruct import (
+    reconstruct_from_patches,
+    reconstruct_spatial_attention_from_patches,
+)
 from hsi_water_detection_app.models.hyper_sigma import load_model
-from hsi_water_detection_app.visualization.spatial import save_probability_map
+from hsi_water_detection_app.visualization.spatial import (
+    save_probability_map,
+    save_spatial_attention_map,
+)
 from hsi_water_detection_app.visualization.spectral import save_spectral_outputs
+from hsi_water_detection_app.data.loader import (
+    load_hsi_cube,
+    load_hsi_window,
+    load_hsi_bounds,
+    parse_header_wavelengths,
+)
 
 
 def build_parser():
@@ -32,8 +48,20 @@ def build_parser():
         type=str,
         default="auto",
         choices=["auto", "hyperion", "hisui", "generic"],
-        help="Sensor type"
+        help="Sensor type",
     )
+    # Pixel ROI
+    parser.add_argument("--row_start", type=int, default=None, help="ROI row start")
+    parser.add_argument("--row_stop", type=int, default=None, help="ROI row stop")
+    parser.add_argument("--col_start", type=int, default=None, help="ROI col start")
+    parser.add_argument("--col_stop", type=int, default=None, help="ROI col stop")
+
+    # Geospatial ROI (e.g. UTM)
+    parser.add_argument("--xmin", type=float, default=None, help="ROI xmin in dataset CRS")
+    parser.add_argument("--ymin", type=float, default=None, help="ROI ymin in dataset CRS")
+    parser.add_argument("--xmax", type=float, default=None, help="ROI xmax in dataset CRS")
+    parser.add_argument("--ymax", type=float, default=None, help="ROI ymax in dataset CRS")
+
     return parser
 
 
@@ -44,12 +72,59 @@ def main():
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    cube, meta = load_hsi_cube(args.input, allow_dummy=True)
+    use_pixel_roi = all(
+        v is not None
+        for v in [args.row_start, args.row_stop, args.col_start, args.col_stop]
+    )
 
+    use_bounds_roi = all(
+        v is not None
+        for v in [args.xmin, args.ymin, args.xmax, args.ymax]
+    )
+
+    if use_bounds_roi and use_pixel_roi:
+        raise ValueError("Specify either pixel ROI (--row_start...) or bounds ROI (--xmin...), not both.")
+
+    if use_bounds_roi:
+        cube, meta = load_hsi_bounds(
+            args.input,
+            xmin=args.xmin,
+            ymin=args.ymin,
+            xmax=args.xmax,
+            ymax=args.ymax,
+        )
+        print(
+            f"[INFO] bounds ROI mode enabled: "
+            f"x=({args.xmin}, {args.xmax}), "
+            f"y=({args.ymin}, {args.ymax})"
+        )
+    elif use_pixel_roi:
+        cube, meta = load_hsi_window(
+            args.input,
+            row_start=args.row_start,
+            row_stop=args.row_stop,
+            col_start=args.col_start,
+            col_stop=args.col_stop,
+        )
+        print(
+            f"[INFO] pixel ROI mode enabled: "
+            f"rows=({args.row_start}, {args.row_stop}), "
+            f"cols=({args.col_start}, {args.col_stop})"
+        )
+    else:
+        cube, meta = load_hsi_cube(args.input, allow_dummy=True)
+
+    wavelengths = None
     if args.header:
         wavelengths = parse_header_wavelengths(args.header)
-    else:
+
+    if wavelengths is None:
         wavelengths = meta.get("wavelengths")
+
+    if wavelengths is not None:
+        print(f"[INFO] wavelength axis enabled with {len(wavelengths)} values")
+    else:
+        print("[INFO] wavelength axis unavailable; spectral attention will use band index")
 
     sensor = args.sensor
     if sensor == "auto":
@@ -66,14 +141,25 @@ def main():
         cube = remove_bad_bands(cube, bad_band_indices=HYPERION_BAD_BANDS_0BASED)
 
         if wavelengths is not None and before_bands is not None:
-            bad_set = set(HYPERION_BAD_BANDS_0BASED)
-            keep_indices = [i for i in range(before_bands) if i not in bad_set]
             if len(wavelengths) == before_bands:
+                bad_set = set(HYPERION_BAD_BANDS_0BASED)
+                keep_indices = [i for i in range(before_bands) if i not in bad_set]
                 wavelengths = wavelengths[keep_indices]
+                print(f"[INFO] wavelength vector adjusted with bad-band removal: {before_bands} -> {len(wavelengths)}")
+            else:
+                print(
+                    f"[WARN] wavelength length ({len(wavelengths)}) does not match "
+                    f"pre-removal band count ({before_bands}); keeping wavelength vector unchanged"
+                )
 
     cube = normalize_cube(cube)
 
-    model = load_model(args.model_checkpoint, device=args.device)
+    model = load_model(
+        args.model_checkpoint,
+        device=args.device,
+        in_channels=None if cube is None else cube.shape[0],
+        patch_size=args.patch_size,
+    )
 
     if cube is None:
         patch_outputs = []
@@ -94,6 +180,11 @@ def main():
         stride=args.stride,
     )
 
+    spatial_attn_map = reconstruct_spatial_attention_from_patches(
+        patch_outputs,
+        image_shape=image_shape,
+    )
+
     save_probability_map(
         prob_map,
         output_path=str(output_dir / "probability_map.npy"),
@@ -108,6 +199,18 @@ def main():
         },
     )
 
+    save_spatial_attention_map(
+        spatial_attn=spatial_attn_map,
+        output_dir=str(output_dir),
+        metadata={
+            "crs": meta.get("crs"),
+            "transform": meta.get("transform"),
+        },
+        cube=cube,
+        rgb_bands=(3, 9, 17),
+        save_geotiff=True,
+    )
+
     save_spectral_outputs(
         attention_data=first_spectral_attention,
         output_dir=str(output_dir),
@@ -116,11 +219,9 @@ def main():
 
     print("Pipeline skeleton is connected.")
     print("args:", args)
-    print("meta:", meta)
-    print("wavelengths:", None if wavelengths is None else getattr(wavelengths, "shape", None))
-    print("model:", model)
     print("cube:", "None" if cube is None else cube.shape)
     print("prob_map:", "None" if prob_map is None else prob_map.shape)
+    print("spatial_attn_map:", "None" if spatial_attn_map is None else spatial_attn_map.shape)
 
 
 if __name__ == "__main__":
