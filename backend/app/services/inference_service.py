@@ -8,6 +8,12 @@ from datetime import datetime
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
+PUBLIC_BASE_URL = "http://127.0.0.1:8000"
+
+
+def to_public_url(path: Path) -> str:
+    rel = path.relative_to(PROJECT_ROOT)
+    return f"{PUBLIC_BASE_URL}/{rel.as_posix()}"
 
 
 def run_inference_pipeline(
@@ -73,23 +79,26 @@ def run_inference_pipeline(
         text=True,
     )
 
+    files = {
+        "probability_map_json": output_dir / "probability_map.json",
+        "probability_map_npy": output_dir / "probability_map.npy",
+        "probability_map_tif": output_dir / "probability_map.tif",
+        "spatial_attention_npy": output_dir / "spatial_attention.npy",
+        "spatial_attention_png": output_dir / "spatial_attention.png",
+        "spatial_attention_tif": output_dir / "spatial_attention.tif",
+        "spatial_attention_overlay_png": output_dir / "spatial_attention_overlay.png",
+        "spectral_attention_csv": output_dir / "spectral_attention.csv",
+        "spectral_attention_png": output_dir / "spectral_attention.png",
+        "run_config": output_dir / "run_config.json",
+    }
+
     result = {
         "ok": proc.returncode == 0,
         "stdout": proc.stdout,
         "stderr": proc.stderr,
         "output_dir": str(output_dir),
-        "files": {
-            "probability_map_json": str(output_dir / "probability_map.json"),
-            "probability_map_npy": str(output_dir / "probability_map.npy"),
-            "probability_map_tif": str(output_dir / "probability_map.tif"),
-            "spatial_attention_npy": str(output_dir / "spatial_attention.npy"),
-            "spatial_attention_png": str(output_dir / "spatial_attention.png"),
-            "spatial_attention_tif": str(output_dir / "spatial_attention.tif"),
-            "spatial_attention_overlay_png": str(output_dir / "spatial_attention_overlay.png"),
-            "spectral_attention_csv": str(output_dir / "spectral_attention.csv"),
-            "spectral_attention_png": str(output_dir / "spectral_attention.png"),
-            "run_config": str(output_dir / "run_config.json"),
-        },
+        "files": {k: str(v) for k, v in files.items()},
+        "urls": {k: to_public_url(v) for k, v in files.items() if v.exists()},
     }
 
     (output_dir / "api_result.json").write_text(
