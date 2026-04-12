@@ -1,4 +1,6 @@
 import argparse
+import json
+from datetime import datetime
 from pathlib import Path
 
 from hsi_water_detection_app.config import (
@@ -9,6 +11,7 @@ from hsi_water_detection_app.config import (
 from hsi_water_detection_app.data.loader import (
     load_hsi_cube,
     load_hsi_window,
+    load_hsi_bounds,
     parse_header_wavelengths,
 )
 from hsi_water_detection_app.data.preprocessing import normalize_cube, remove_bad_bands
@@ -23,12 +26,6 @@ from hsi_water_detection_app.visualization.spatial import (
     save_spatial_attention_map,
 )
 from hsi_water_detection_app.visualization.spectral import save_spectral_outputs
-from hsi_water_detection_app.data.loader import (
-    load_hsi_cube,
-    load_hsi_window,
-    load_hsi_bounds,
-    parse_header_wavelengths,
-)
 
 
 def build_parser():
@@ -37,8 +34,8 @@ def build_parser():
         description="HSI Water Detection Application CLI",
     )
     parser.add_argument("--input", type=str, required=True, help="Path to input HSI file")
-    parser.add_argument("--header", type=str, default=None, help="Optional ENVI header file")
-    parser.add_argument("--output_dir", type=str, required=True, help="Directory to save outputs")
+    parser.add_argument("--header", type=str, default=None, help="Optional ENVI header file or wavelength sidecar")
+    parser.add_argument("--output_dir", type=str, default=None, help="Optional explicit output directory")
     parser.add_argument("--model_checkpoint", type=str, required=True, help="Path to model checkpoint")
     parser.add_argument("--patch_size", type=int, default=DEFAULT_PATCH_SIZE, help="Patch size")
     parser.add_argument("--stride", type=int, default=DEFAULT_STRIDE, help="Patch stride")
@@ -50,13 +47,14 @@ def build_parser():
         choices=["auto", "hyperion", "hisui", "generic"],
         help="Sensor type",
     )
+
     # Pixel ROI
     parser.add_argument("--row_start", type=int, default=None, help="ROI row start")
     parser.add_argument("--row_stop", type=int, default=None, help="ROI row stop")
     parser.add_argument("--col_start", type=int, default=None, help="ROI col start")
     parser.add_argument("--col_stop", type=int, default=None, help="ROI col stop")
 
-    # Geospatial ROI (e.g. UTM)
+    # Bounds ROI
     parser.add_argument("--xmin", type=float, default=None, help="ROI xmin in dataset CRS")
     parser.add_argument("--ymin", type=float, default=None, help="ROI ymin in dataset CRS")
     parser.add_argument("--xmax", type=float, default=None, help="ROI xmax in dataset CRS")
@@ -65,25 +63,68 @@ def build_parser():
     return parser
 
 
+def infer_sensor(args_sensor: str, input_path: str) -> str:
+    if args_sensor != "auto":
+        return args_sensor
+    input_lower = str(input_path).lower()
+    if "eo1" in input_lower or "hyperion" in input_lower:
+        return "hyperion"
+    if "hisui" in input_lower:
+        return "hisui"
+    return "generic"
+
+
+def build_run_name(args) -> str:
+    now = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+
+    if all(v is not None for v in [args.xmin, args.ymin, args.xmax, args.ymax]):
+        roi_part = (
+            f"roi_bounds_"
+            f"x{int(args.xmin)}-{int(args.xmax)}_"
+            f"y{int(args.ymin)}-{int(args.ymax)}"
+        )
+    elif all(v is not None for v in [args.row_start, args.row_stop, args.col_start, args.col_stop]):
+        roi_part = (
+            f"roi_pixel_"
+            f"r{args.row_start}-{args.row_stop}_"
+            f"c{args.col_start}-{args.col_stop}"
+        )
+    else:
+        roi_part = "fullscene"
+
+    return f"{now}_{roi_part}"
+
+
+def build_output_dir(args, sensor: str) -> Path:
+    if args.output_dir:
+        return Path(args.output_dir)
+
+    input_path = Path(args.input)
+    scene_name = input_path.stem
+    run_name = build_run_name(args)
+
+    return Path("outputs") / sensor / scene_name / run_name
+
+
 def main():
     parser = build_parser()
     args = parser.parse_args()
 
-    output_dir = Path(args.output_dir)
+    sensor = infer_sensor(args.sensor, args.input)
+    output_dir = build_output_dir(args, sensor)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     use_pixel_roi = all(
         v is not None
         for v in [args.row_start, args.row_stop, args.col_start, args.col_stop]
     )
-
     use_bounds_roi = all(
         v is not None
         for v in [args.xmin, args.ymin, args.xmax, args.ymax]
     )
 
     if use_bounds_roi and use_pixel_roi:
-        raise ValueError("Specify either pixel ROI (--row_start...) or bounds ROI (--xmin...), not both.")
+        raise ValueError("Specify either pixel ROI or bounds ROI, not both.")
 
     if use_bounds_roi:
         cube, meta = load_hsi_bounds(
@@ -112,12 +153,15 @@ def main():
             f"cols=({args.col_start}, {args.col_stop})"
         )
     else:
-        cube, meta = load_hsi_cube(args.input, allow_dummy=True, sensor=args.sensor if args.sensor != "auto" else None)
+        cube, meta = load_hsi_cube(
+            args.input,
+            allow_dummy=True,
+            sensor=sensor if sensor != "generic" else None,
+        )
 
     wavelengths = None
     if args.header:
         wavelengths = parse_header_wavelengths(args.header)
-
     if wavelengths is None:
         wavelengths = meta.get("wavelengths")
 
@@ -125,16 +169,6 @@ def main():
         print(f"[INFO] wavelength axis enabled with {len(wavelengths)} values")
     else:
         print("[INFO] wavelength axis unavailable; spectral attention will use band index")
-
-    sensor = args.sensor
-    if sensor == "auto":
-        input_lower = str(args.input).lower()
-        if "eo1" in input_lower or "hyperion" in input_lower:
-            sensor = "hyperion"
-        elif "hisui" in input_lower:
-            sensor = "hisui"
-        else:
-            sensor = "generic"
 
     if sensor == "hyperion":
         before_bands = None if cube is None else cube.shape[0]
@@ -193,6 +227,7 @@ def main():
             "header": args.header,
             "model_checkpoint": args.model_checkpoint,
             "device": args.device,
+            "sensor": sensor,
             "meta": meta,
             "crs": meta.get("crs"),
             "transform": meta.get("transform"),
@@ -217,8 +252,33 @@ def main():
         wavelengths=wavelengths,
     )
 
+    run_config = {
+        "input": args.input,
+        "header": args.header,
+        "model_checkpoint": args.model_checkpoint,
+        "patch_size": args.patch_size,
+        "stride": args.stride,
+        "device": args.device,
+        "sensor": sensor,
+        "row_start": args.row_start,
+        "row_stop": args.row_stop,
+        "col_start": args.col_start,
+        "col_stop": args.col_stop,
+        "xmin": args.xmin,
+        "ymin": args.ymin,
+        "xmax": args.xmax,
+        "ymax": args.ymax,
+        "output_dir": str(output_dir),
+    }
+    (output_dir / "run_config.json").write_text(
+        json.dumps(run_config, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
     print("Pipeline skeleton is connected.")
     print("args:", args)
+    print("sensor:", sensor)
+    print("output_dir:", output_dir)
     print("cube:", "None" if cube is None else cube.shape)
     print("prob_map:", "None" if prob_map is None else prob_map.shape)
     print("spatial_attn_map:", "None" if spatial_attn_map is None else spatial_attn_map.shape)
