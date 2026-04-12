@@ -1,0 +1,76 @@
+{
+  "split": "val",
+  "threshold": 0.5,
+  "n_samples": 8,
+  "n_wet": 4,
+  "n_dry": 4,
+  "roc_auc": 0.5,
+  "pr_auc": 0.5249999999999999,
+  "precision": 0.0,
+  "recall": 0.0,
+  "f1": 0.0,
+  "confusion_matrix": [
+    [
+      4,
+      0
+    ],
+    [
+      4,
+      0
+    ]
+  ],
+  "confusion_matrix_labels": [
+    "dry(0)",
+    "wet(1)"
+  ],
+  "samples": [
+    {
+      "file": "sample_0004.npz",
+      "y_true": 1,
+      "y_score": 2.3312586402230853e-30,
+      "y_pred": 0
+    },
+    {
+      "file": "sample_0005.npz",
+      "y_true": 0,
+      "y_score": 2.4523091676798032e-29,
+      "y_pred": 0
+    },
+    {
+      "file": "sample_0019.npz",
+      "y_true": 1,
+      "y_score": 1.7693055724509052e-30,
+      "y_pred": 0
+    },
+    {
+      "file": "sample_0020.npz",
+      "y_true": 1,
+      "y_score": 1.5560768217032704e-30,
+      "y_pred": 0
+    },
+    {
+      "file": "sample_0021.npz",
+      "y_true": 1,
+      "y_score": 4.204919711083494e-30,
+      "y_pred": 0
+    },
+    {
+      "file": "sample_0035.npz",
+      "y_true": 0,
+      "y_score": 3.2318125209688343e-28,
+      "y_pred": 0
+    },
+    {
+      "file": "sample_0036.npz",
+      "y_true": 0,
+      "y_score": 5.3072636890985316e-33,
+      "y_pred": 0
+    },
+    {
+      "file": "sample_0037.npz",
+      "y_true": 0,
+      "y_score": 1.8338928693151779e-35,
+      "y_pred": 0
+    }
+  ]
+}

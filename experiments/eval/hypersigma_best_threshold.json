@@ -1,0 +1,9 @@
+{
+  "source_metrics_json": "experiments/eval/hypersigma_val_metrics.json",
+  "criterion": "f1",
+  "best_threshold": 1.5560768217032704e-30,
+  "best_f1": 0.8,
+  "precision_at_best": 0.6666666666666666,
+  "recall_at_best": 1.0,
+  "n_thresholds": 8
+}
