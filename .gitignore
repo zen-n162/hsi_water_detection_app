@@ -26,3 +26,12 @@ results_real/
 
 results/
 results_real/
+
+# generated outputs
+outputs/
+results/
+results_real/
+results_real_model/
+results_roi/
+results_roi_bounds/
+results_roi_test/
