@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import Dropzone from "./components/Dropzone";
-import { runInference } from "./lib/api";
+import RoiSelector from "./components/RoiSelector";
+import { getGrayscalePreview, runInference } from "./lib/api";
 
 type ResultCardProps = {
   title: string;
@@ -18,17 +19,12 @@ function ResultCard({ title, imageUrl, alt }: ResultCardProps) {
         background: "#111",
       }}
     >
-      <h3 style={{ marginTop: 0, marginBottom: "12px", textAlign: "center" }}>{title}</h3>
+      <h3 style={{ marginTop: 0, marginBottom: 12, textAlign: "center" }}>{title}</h3>
       {imageUrl ? (
         <img
           src={imageUrl}
           alt={alt}
-          style={{
-            width: "100%",
-            borderRadius: "8px",
-            display: "block",
-            background: "#222",
-          }}
+          style={{ width: "100%", borderRadius: 8, display: "block", background: "#222" }}
         />
       ) : (
         <div style={{ color: "#bbb", textAlign: "center", padding: "48px 0" }}>{alt}</div>
@@ -44,7 +40,6 @@ export default function App() {
   const [device, setDevice] = useState("cuda");
   const [modelType, setModelType] = useState("ss");
 
-  const [modelCheckpoint, setModelCheckpoint] = useState("");
   const [spatCheckpoint, setSpatCheckpoint] = useState(
     "/home/zennakamura/MasterResearch/HyperSIGMA/HyperspectralDetection/spat-vit-b-checkpoint-1599.pth"
   );
@@ -52,17 +47,25 @@ export default function App() {
     "/home/zennakamura/MasterResearch/HyperSIGMA/HyperspectralDetection/spec-vit-b-checkpoint-1599.pth"
   );
 
-  const [xmin, setXmin] = useState("563000");
-  const [ymin, setYmin] = useState("1405000");
-  const [xmax, setXmax] = useState("567000");
-  const [ymax, setYmax] = useState("1409000");
+  const [previewBand, setPreviewBand] = useState("10");
+  const [previewWavelength, setPreviewWavelength] = useState("");
+
+  const [roi, setRoi] = useState<{
+    row_start: number;
+    row_stop: number;
+    col_start: number;
+    col_stop: number;
+  } | null>(null);
+
+  const [previewResult, setPreviewResult] = useState<any>(null);
   const [result, setResult] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+  const [loadingInference, setLoadingInference] = useState(false);
 
   const hsiPreviewName = useMemo(() => hsiFile?.name ?? "No file selected", [hsiFile]);
   const wavelengthPreviewName = useMemo(() => wavelengthFile?.name ?? "No file selected", [wavelengthFile]);
 
-  const handleRun = async () => {
+  const handlePreview = async () => {
     if (!hsiFile) {
       alert("HSI file is required");
       return;
@@ -70,73 +73,80 @@ export default function App() {
 
     const formData = new FormData();
     formData.append("hsi_file", hsiFile);
+    if (wavelengthFile) formData.append("wavelength_file", wavelengthFile);
 
-    if (wavelengthFile) {
-      formData.append("wavelength_file", wavelengthFile);
+    formData.append("sensor", sensor);
+    if (previewBand.trim() !== "") formData.append("preview_band", previewBand.trim());
+    if (previewWavelength.trim() !== "") formData.append("preview_wavelength", previewWavelength.trim());
+
+    setLoadingPreview(true);
+    try {
+      const res = await getGrayscalePreview(formData);
+      setPreviewResult(res);
+    } catch (err) {
+      console.error(err);
+      alert("Preview failed");
+    } finally {
+      setLoadingPreview(false);
     }
+  };
+
+  const handleRun = async () => {
+    if (!hsiFile) {
+      alert("HSI file is required");
+      return;
+    }
+    if (!roi) {
+      alert("Select ROI first");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("hsi_file", hsiFile);
+    if (wavelengthFile) formData.append("wavelength_file", wavelengthFile);
 
     formData.append("sensor", sensor);
     formData.append("device", device);
     formData.append("model_type", modelType);
+    formData.append("spat_checkpoint", spatCheckpoint);
+    formData.append("spec_checkpoint", specCheckpoint);
 
-    if (modelCheckpoint.trim()) {
-      formData.append("model_checkpoint", modelCheckpoint.trim());
-    }
-    if (spatCheckpoint.trim()) {
-      formData.append("spat_checkpoint", spatCheckpoint.trim());
-    }
-    if (specCheckpoint.trim()) {
-      formData.append("spec_checkpoint", specCheckpoint.trim());
-    }
-
-    formData.append("xmin", xmin);
-    formData.append("ymin", ymin);
-    formData.append("xmax", xmax);
-    formData.append("ymax", ymax);
+    formData.append("row_start", String(roi.row_start));
+    formData.append("row_stop", String(roi.row_stop));
+    formData.append("col_start", String(roi.col_start));
+    formData.append("col_stop", String(roi.col_stop));
     formData.append("patch_size", "64");
     formData.append("stride", "32");
 
-    setLoading(true);
+    setLoadingInference(true);
     setResult(null);
-
     try {
       const res = await runInference(formData);
       setResult(res);
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
       alert("Inference failed");
     } finally {
-      setLoading(false);
+      setLoadingInference(false);
     }
   };
 
   const urls = result?.urls ?? {};
+  const previewUrls = previewResult?.urls ?? {};
 
   return (
-    <div style={{ maxWidth: "1400px", margin: "0 auto", padding: "24px", fontFamily: "sans-serif" }}>
+    <div style={{ maxWidth: 1500, margin: "0 auto", padding: 24, fontFamily: "sans-serif" }}>
       <h1 style={{ textAlign: "center" }}>HSI Water Detection UI</h1>
 
-      <div style={{ display: "grid", gridTemplateColumns: "360px 1fr", gap: "24px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "380px 1fr", gap: 24 }}>
         <div>
-          <Dropzone
-            label="HSI file"
-            onFileSelected={setHsiFile}
-            selectedFile={hsiFile}
-          />
-          <div style={{ marginBottom: "12px", fontSize: "0.9rem", color: "#555" }}>
-            {hsiPreviewName}
-          </div>
+          <Dropzone label="HSI file" onFileSelected={setHsiFile} selectedFile={hsiFile} />
+          <div style={{ marginBottom: 12, fontSize: "0.9rem", color: "#555" }}>{hsiPreviewName}</div>
 
-          <Dropzone
-            label="Wavelength sidecar (optional)"
-            onFileSelected={setWavelengthFile}
-            selectedFile={wavelengthFile}
-          />
-          <div style={{ marginBottom: "12px", fontSize: "0.9rem", color: "#555" }}>
-            {wavelengthPreviewName}
-          </div>
+          <Dropzone label="Wavelength sidecar (optional)" onFileSelected={setWavelengthFile} selectedFile={wavelengthFile} />
+          <div style={{ marginBottom: 12, fontSize: "0.9rem", color: "#555" }}>{wavelengthPreviewName}</div>
 
-          <div style={{ marginBottom: "12px" }}>
+          <div style={{ marginBottom: 12 }}>
             <label>Sensor: </label>
             <select value={sensor} onChange={(e) => setSensor(e.target.value)}>
               <option value="hyperion">hyperion</option>
@@ -146,7 +156,7 @@ export default function App() {
             </select>
           </div>
 
-          <div style={{ marginBottom: "12px" }}>
+          <div style={{ marginBottom: 12 }}>
             <label>Device: </label>
             <select value={device} onChange={(e) => setDevice(e.target.value)}>
               <option value="cuda">cuda</option>
@@ -154,153 +164,83 @@ export default function App() {
             </select>
           </div>
 
-          <div style={{ marginBottom: "12px" }}>
+          <div style={{ marginBottom: 12 }}>
             <label>Model type: </label>
             <select value={modelType} onChange={(e) => setModelType(e.target.value)}>
-              <option value="ss">ss (spatial + spectral)</option>
-              <option value="sa">sa (spatial only)</option>
+              <option value="ss">ss</option>
+              <option value="sa">sa</option>
             </select>
           </div>
 
-          <div style={{ marginBottom: "12px" }}>
-            <label>Legacy single checkpoint (optional): </label>
-            <input
-              value={modelCheckpoint}
-              onChange={(e) => setModelCheckpoint(e.target.value)}
-              placeholder="optional legacy model checkpoint"
-              style={{ width: "100%" }}
-            />
+          <div style={{ marginBottom: 12 }}>
+            <label>Spatial checkpoint:</label>
+            <input value={spatCheckpoint} onChange={(e) => setSpatCheckpoint(e.target.value)} style={{ width: "100%" }} />
           </div>
 
-          <div style={{ marginBottom: "12px" }}>
-            <label>Spatial checkpoint: </label>
-            <input
-              value={spatCheckpoint}
-              onChange={(e) => setSpatCheckpoint(e.target.value)}
-              placeholder="/path/to/spat-vit-....pth"
-              style={{ width: "100%" }}
-            />
+          <div style={{ marginBottom: 12 }}>
+            <label>Spectral checkpoint:</label>
+            <input value={specCheckpoint} onChange={(e) => setSpecCheckpoint(e.target.value)} style={{ width: "100%" }} />
           </div>
 
-          <div style={{ marginBottom: "12px" }}>
-            <label>Spectral checkpoint: </label>
-            <input
-              value={specCheckpoint}
-              onChange={(e) => setSpecCheckpoint(e.target.value)}
-              placeholder="/path/to/spec-vit-....pth"
-              style={{ width: "100%" }}
-            />
+          <div style={{ marginBottom: 12 }}>
+            <label>Preview band index:</label>
+            <input value={previewBand} onChange={(e) => setPreviewBand(e.target.value)} style={{ width: "100%" }} />
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "16px" }}>
-            <input value={xmin} onChange={(e) => setXmin(e.target.value)} placeholder="xmin" />
-            <input value={xmax} onChange={(e) => setXmax(e.target.value)} placeholder="xmax" />
-            <input value={ymin} onChange={(e) => setYmin(e.target.value)} placeholder="ymin" />
-            <input value={ymax} onChange={(e) => setYmax(e.target.value)} placeholder="ymax" />
+          <div style={{ marginBottom: 12 }}>
+            <label>Preview wavelength (optional):</label>
+            <input value={previewWavelength} onChange={(e) => setPreviewWavelength(e.target.value)} style={{ width: "100%" }} />
           </div>
 
-          <button onClick={handleRun} disabled={loading} style={{ padding: "10px 18px" }}>
-            {loading ? "Running..." : "Run Inference"}
+          <button onClick={handlePreview} disabled={loadingPreview} style={{ padding: "10px 18px", marginRight: 8 }}>
+            {loadingPreview ? "Loading Preview..." : "Load Grayscale Preview"}
           </button>
 
-          {result && (
-            <div style={{ marginTop: "20px", fontSize: "0.92rem" }}>
-              <div><strong>Success:</strong> {String(result.ok)}</div>
-              <div><strong>Output dir:</strong> {result.output_dir}</div>
-              <div><strong>Resolved model checkpoint:</strong> {result.resolved_model_checkpoint || "(none)"}</div>
-              <div><strong>Resolved spat checkpoint:</strong> {result.resolved_spat_checkpoint || "(none)"}</div>
-              <div><strong>Resolved spec checkpoint:</strong> {result.resolved_spec_checkpoint || "(none)"}</div>
-              <div><strong>Model type:</strong> {result.model_type}</div>
+          <button onClick={handleRun} disabled={loadingInference} style={{ padding: "10px 18px" }}>
+            {loadingInference ? "Running..." : "Run Inference with ROI"}
+          </button>
+
+          {previewResult && (
+            <div style={{ marginTop: 16, fontSize: "0.92rem" }}>
+              <div><strong>Preview band:</strong> {previewResult.preview_band_index}</div>
+              <div><strong>Preview wavelength:</strong> {String(previewResult.preview_wavelength_nm ?? "(none)")}</div>
+              <div><strong>Preview image:</strong> {previewResult.image_width} x {previewResult.image_height}</div>
+            </div>
+          )}
+
+          {roi && (
+            <div style={{ marginTop: 16, fontSize: "0.92rem" }}>
+              <div><strong>ROI row:</strong> {roi.row_start} - {roi.row_stop}</div>
+              <div><strong>ROI col:</strong> {roi.col_start} - {roi.col_stop}</div>
             </div>
           )}
         </div>
 
         <div>
-          <h2>Results</h2>
+          <RoiSelector
+            imageUrl={previewUrls.grayscale_preview_png}
+            imageWidth={previewResult?.image_width}
+            imageHeight={previewResult?.image_height}
+            onApply={setRoi}
+          />
+
+          <h2 style={{ marginTop: 24 }}>Results</h2>
 
           {!result && <div>No result yet.</div>}
 
           {result && (
             <>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "16px",
-                  alignItems: "start",
-                }}
-              >
-                <ResultCard
-                  title="Pseudo Color"
-                  imageUrl={urls.pseudocolor_png}
-                  alt="Pseudo color image"
-                />
-
-                <ResultCard
-                  title="Water Detection Overlay"
-                  imageUrl={urls.probability_overlay_png}
-                  alt="Water detection over pseudo color"
-                />
-
-                <ResultCard
-                  title="Spatial Attention Overlay"
-                  imageUrl={urls.spatial_attention_overlay_png}
-                  alt="Spatial attention overlay"
-                />
-
-                <ResultCard
-                  title="Spectral Attention"
-                  imageUrl={urls.spectral_attention_png}
-                  alt="Spectral attention chart"
-                />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, alignItems: "start" }}>
+                <ResultCard title="Pseudo Color" imageUrl={urls.pseudocolor_png} alt="Pseudo color image" />
+                <ResultCard title="Water Detection Overlay" imageUrl={urls.probability_overlay_png} alt="Water detection over pseudo color" />
+                <ResultCard title="Spatial Attention Overlay" imageUrl={urls.spatial_attention_overlay_png} alt="Spatial attention overlay" />
+                <ResultCard title="Spectral Attention" imageUrl={urls.spectral_attention_png} alt="Spectral attention chart" />
               </div>
 
-              <details style={{ marginTop: "20px" }}>
+              <details style={{ marginTop: 20 }}>
                 <summary>Additional files</summary>
-                <pre
-                  style={{
-                    whiteSpace: "pre-wrap",
-                    background: "#f5f5f5",
-                    padding: "12px",
-                    borderRadius: "8px",
-                    maxHeight: "260px",
-                    overflow: "auto",
-                    fontSize: "0.82rem",
-                  }}
-                >
+                <pre style={{ whiteSpace: "pre-wrap", background: "#f5f5f5", padding: 12, borderRadius: 8, maxHeight: 260, overflow: "auto", fontSize: "0.82rem" }}>
                   {JSON.stringify(result.urls, null, 2)}
-                </pre>
-              </details>
-
-              <details style={{ marginTop: "20px" }}>
-                <summary>Stdout / Stderr</summary>
-
-                <h4>Stdout</h4>
-                <pre
-                  style={{
-                    whiteSpace: "pre-wrap",
-                    background: "#f5f5f5",
-                    padding: "12px",
-                    borderRadius: "8px",
-                    maxHeight: "260px",
-                    overflow: "auto",
-                  }}
-                >
-                  {result.stdout}
-                </pre>
-
-                <h4>Stderr</h4>
-                <pre
-                  style={{
-                    whiteSpace: "pre-wrap",
-                    background: "#f5f5f5",
-                    padding: "12px",
-                    borderRadius: "8px",
-                    maxHeight: "260px",
-                    overflow: "auto",
-                  }}
-                >
-                  {result.stderr}
                 </pre>
               </details>
             </>
