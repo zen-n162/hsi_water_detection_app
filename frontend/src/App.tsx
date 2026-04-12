@@ -42,6 +42,7 @@ export default function App() {
   const [wavelengthFile, setWavelengthFile] = useState<File | null>(null);
   const [sensor, setSensor] = useState("hyperion");
   const [device, setDevice] = useState("cuda");
+  const [modelCheckpoint, setModelCheckpoint] = useState("dummy.pth");
   const [xmin, setXmin] = useState("563000");
   const [ymin, setYmin] = useState("1405000");
   const [xmax, setXmax] = useState("567000");
@@ -67,6 +68,7 @@ export default function App() {
 
     formData.append("sensor", sensor);
     formData.append("device", device);
+    formData.append("model_checkpoint", modelCheckpoint);
     formData.append("xmin", xmin);
     formData.append("ymin", ymin);
     formData.append("xmax", xmax);
@@ -132,6 +134,16 @@ export default function App() {
             </select>
           </div>
 
+          <div style={{ marginBottom: "12px" }}>
+            <label>Checkpoint path: </label>
+            <input
+              value={modelCheckpoint}
+              onChange={(e) => setModelCheckpoint(e.target.value)}
+              placeholder="e.g. src/checkpoints/model.pth"
+              style={{ width: "100%" }}
+            />
+          </div>
+
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "16px" }}>
             <input value={xmin} onChange={(e) => setXmin(e.target.value)} placeholder="xmin" />
             <input value={xmax} onChange={(e) => setXmax(e.target.value)} placeholder="xmax" />
@@ -147,6 +159,7 @@ export default function App() {
             <div style={{ marginTop: "20px", fontSize: "0.92rem" }}>
               <div><strong>Success:</strong> {String(result.ok)}</div>
               <div><strong>Output dir:</strong> {result.output_dir}</div>
+              <div><strong>Resolved checkpoint:</strong> {result.resolved_model_checkpoint}</div>
             </div>
           )}
         </div>

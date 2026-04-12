@@ -28,6 +28,7 @@ def run_inference_pipeline(
     header_path: str | None,
     sensor: str,
     device: str,
+    model_checkpoint: str,
     patch_size: int,
     stride: int,
     row_start: int | None,
@@ -42,12 +43,16 @@ def run_inference_pipeline(
     output_dir = PROJECT_ROOT / "outputs" / "web_ui" / datetime.now().strftime("%Y-%m-%d_%H%M%S")
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    ckpt_path = Path(model_checkpoint)
+    if not ckpt_path.is_absolute():
+        ckpt_path = (PROJECT_ROOT / ckpt_path).resolve()
+
     cmd = [
         "python",
         "-m",
         "hsi_water_detection_app.cli",
         "--input", input_path,
-        "--model_checkpoint", "dummy.pth",
+        "--model_checkpoint", str(ckpt_path),
         "--sensor", sensor,
         "--device", device,
         "--patch_size", str(patch_size),
@@ -98,7 +103,6 @@ def run_inference_pipeline(
         "run_config": output_dir / "run_config.json",
     }
 
-    # Create preview images from original cube + output arrays
     preview_cube = load_preview_cube(
         input_path=input_path,
         sensor=sensor,
@@ -147,6 +151,7 @@ def run_inference_pipeline(
         "stdout": proc.stdout,
         "stderr": proc.stderr,
         "output_dir": str(output_dir),
+        "resolved_model_checkpoint": str(ckpt_path),
         "files": {k: str(v) for k, v in files.items()},
         "urls": {k: to_public_url(v) for k, v in files.items() if v.exists()},
     }
