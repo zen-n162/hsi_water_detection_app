@@ -6,6 +6,10 @@ import subprocess
 from pathlib import Path
 from datetime import datetime
 
+from backend.app.services.preview_service import (
+    make_probability_png,
+    make_pseudocolor_png,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 PUBLIC_BASE_URL = "http://127.0.0.1:8000"
@@ -91,6 +95,25 @@ def run_inference_pipeline(
         "spectral_attention_png": output_dir / "spectral_attention.png",
         "run_config": output_dir / "run_config.json",
     }
+
+    # Additional preview PNGs for frontend
+    probability_map_png = output_dir / "probability_map.png"
+    pseudocolor_png = output_dir / "pseudocolor.png"
+
+    make_probability_png(
+        prob_map_npy=files["probability_map_npy"],
+        out_png=probability_map_png,
+    )
+    make_pseudocolor_png(
+        spatial_overlay_png=files["spatial_attention_overlay_png"],
+        spatial_attention_png=files["spatial_attention_png"],
+        out_png=pseudocolor_png,
+    )
+
+    if probability_map_png.exists():
+        files["probability_map_png"] = probability_map_png
+    if pseudocolor_png.exists():
+        files["pseudocolor_png"] = pseudocolor_png
 
     result = {
         "ok": proc.returncode == 0,

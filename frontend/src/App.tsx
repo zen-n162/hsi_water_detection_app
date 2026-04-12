@@ -2,6 +2,41 @@ import { useMemo, useState } from "react";
 import Dropzone from "./components/Dropzone";
 import { runInference } from "./lib/api";
 
+type ResultCardProps = {
+  title: string;
+  imageUrl?: string;
+  alt: string;
+};
+
+function ResultCard({ title, imageUrl, alt }: ResultCardProps) {
+  return (
+    <div
+      style={{
+        border: "1px solid #ddd",
+        borderRadius: "12px",
+        padding: "12px",
+        background: "#111",
+      }}
+    >
+      <h3 style={{ marginTop: 0, marginBottom: "12px", textAlign: "center" }}>{title}</h3>
+      {imageUrl ? (
+        <img
+          src={imageUrl}
+          alt={alt}
+          style={{
+            width: "100%",
+            borderRadius: "8px",
+            display: "block",
+            background: "#222",
+          }}
+        />
+      ) : (
+        <div style={{ color: "#bbb", textAlign: "center", padding: "48px 0" }}>{alt}</div>
+      )}
+    </div>
+  );
+}
+
 export default function App() {
   const [hsiFile, setHsiFile] = useState<File | null>(null);
   const [wavelengthFile, setWavelengthFile] = useState<File | null>(null);
@@ -56,8 +91,8 @@ export default function App() {
   const urls = result?.urls ?? {};
 
   return (
-    <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "24px", fontFamily: "sans-serif" }}>
-      <h1>HSI Water Detection UI</h1>
+    <div style={{ maxWidth: "1400px", margin: "0 auto", padding: "24px", fontFamily: "sans-serif" }}>
+      <h1 style={{ textAlign: "center" }}>HSI Water Detection UI</h1>
 
       <div style={{ display: "grid", gridTemplateColumns: "360px 1fr", gap: "24px" }}>
         <div>
@@ -131,65 +166,51 @@ export default function App() {
                   alignItems: "start",
                 }}
               >
-                <div style={{ border: "1px solid #ddd", borderRadius: "12px", padding: "12px" }}>
-                  <h3 style={{ marginTop: 0 }}>Spatial Attention Overlay</h3>
-                  {urls.spatial_attention_overlay_png ? (
-                    <img
-                      src={urls.spatial_attention_overlay_png}
-                      alt="Spatial attention overlay"
-                      style={{ width: "100%", borderRadius: "8px" }}
-                    />
-                  ) : (
-                    <div>Not available</div>
-                  )}
-                </div>
+                <ResultCard
+                  title="Pseudo Color"
+                  imageUrl={urls.pseudocolor_png}
+                  alt="Pseudo color preview"
+                />
 
-                <div style={{ border: "1px solid #ddd", borderRadius: "12px", padding: "12px" }}>
-                  <h3 style={{ marginTop: 0 }}>Spatial Attention</h3>
-                  {urls.spatial_attention_png ? (
-                    <img
-                      src={urls.spatial_attention_png}
-                      alt="Spatial attention heatmap"
-                      style={{ width: "100%", borderRadius: "8px" }}
-                    />
-                  ) : (
-                    <div>Not available</div>
-                  )}
-                </div>
+                <ResultCard
+                  title="Water Detection"
+                  imageUrl={urls.probability_map_png}
+                  alt="Water detection probability map"
+                />
 
-                <div style={{ border: "1px solid #ddd", borderRadius: "12px", padding: "12px" }}>
-                  <h3 style={{ marginTop: 0 }}>Spectral Attention</h3>
-                  {urls.spectral_attention_png ? (
-                    <img
-                      src={urls.spectral_attention_png}
-                      alt="Spectral attention chart"
-                      style={{ width: "100%", borderRadius: "8px" }}
-                    />
-                  ) : (
-                    <div>Not available</div>
-                  )}
-                </div>
+                <ResultCard
+                  title="Spatial Attention Overlay"
+                  imageUrl={urls.spatial_attention_overlay_png}
+                  alt="Spatial attention overlay"
+                />
 
-                <div style={{ border: "1px solid #ddd", borderRadius: "12px", padding: "12px" }}>
-                  <h3 style={{ marginTop: 0 }}>Files</h3>
-                  <pre
-                    style={{
-                      whiteSpace: "pre-wrap",
-                      background: "#f5f5f5",
-                      padding: "12px",
-                      borderRadius: "8px",
-                      maxHeight: "300px",
-                      overflow: "auto",
-                      fontSize: "0.82rem",
-                    }}
-                  >
-                    {JSON.stringify(result.urls, null, 2)}
-                  </pre>
-                </div>
+                <ResultCard
+                  title="Spectral Attention"
+                  imageUrl={urls.spectral_attention_png}
+                  alt="Spectral attention chart"
+                />
               </div>
 
               <details style={{ marginTop: "20px" }}>
+                <summary>Additional files</summary>
+                <pre
+                  style={{
+                    whiteSpace: "pre-wrap",
+                    background: "#f5f5f5",
+                    padding: "12px",
+                    borderRadius: "8px",
+                    maxHeight: "260px",
+                    overflow: "auto",
+                    fontSize: "0.82rem",
+                  }}
+                >
+                  {JSON.stringify(result.urls, null, 2)}
+                </pre>
+              </details>
+
+              <details style={{ marginTop: "20px" }}>
                 <summary>Stdout / Stderr</summary>
+
                 <h4>Stdout</h4>
                 <pre
                   style={{
