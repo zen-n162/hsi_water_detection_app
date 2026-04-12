@@ -20,16 +20,11 @@ def dprint(*args):
         print("[DEBUG]", *args)
 
 
-# ============================================================
-# Path / import helpers
-# ============================================================
-
 def _candidate_hypersigma_roots() -> List[Path]:
     env_root = os.environ.get("HYPERSIGMA_ROOT")
     candidates = []
     if env_root:
         candidates.append(Path(env_root))
-
     candidates.extend([
         Path("/home/zennakamura/MasterResearch/HyperSIGMA"),
         Path.home() / "MasterResearch" / "HyperSIGMA",
@@ -77,10 +72,6 @@ def _pushd(path: Path):
         os.chdir(old)
 
 
-# ============================================================
-# Checkpoint utilities
-# ============================================================
-
 def _default_spat_checkpoint() -> Path:
     env_path = os.environ.get("HYPERSIGMA_SPAT_CHECKPOINT")
     if env_path:
@@ -111,19 +102,15 @@ def _extract_state_dict(obj: Any) -> Dict[str, torch.Tensor]:
     dprint("Checkpoint object type:", type(obj))
     if isinstance(obj, dict):
         dprint("Top-level checkpoint keys sample:", list(obj.keys())[:20])
-
         if "state_dict" in obj and isinstance(obj["state_dict"], dict):
             dprint("Using checkpoint['state_dict']")
             return obj["state_dict"]
-
         if "model" in obj and isinstance(obj["model"], dict):
             dprint("Using checkpoint['model']")
             return obj["model"]
-
         if all(isinstance(k, str) for k in obj.keys()):
             dprint("Using checkpoint as raw state_dict")
             return obj
-
     raise ValueError("Unsupported checkpoint format; could not extract state_dict.")
 
 
@@ -131,7 +118,6 @@ def _load_checkpoint_file(path: str | Path) -> Dict[str, torch.Tensor]:
     ckpt_path = Path(path)
     if not ckpt_path.exists():
         raise FileNotFoundError(f"Checkpoint not found: {ckpt_path}")
-
     dprint("Loading checkpoint file:", ckpt_path)
     obj = torch.load(ckpt_path, map_location="cpu", weights_only=False)
     state = _extract_state_dict(obj)
@@ -172,18 +158,10 @@ def _smart_load_submodule(
     loaded_state = _load_checkpoint_file(checkpoint_path)
     model_state = submodule.state_dict()
 
-    dprint(f"{name} model state_dict size:", len(model_state))
-    dprint(f"{name} model keys sample:", list(model_state.keys())[:20])
-
     filtered, missing_after_filter, skipped_shape, skipped_unknown = _filter_state_dict_for_model(
         model_state=model_state,
         loaded_state=loaded_state,
     )
-
-    dprint(f"{name} matched keys sample:", list(filtered.keys())[:20])
-    dprint(f"{name} missing keys sample:", missing_after_filter[:20])
-    dprint(f"{name} skipped shape sample:", skipped_shape[:20])
-    dprint(f"{name} skipped unknown sample:", skipped_unknown[:20])
 
     msg = submodule.load_state_dict(filtered, strict=False)
 
@@ -209,10 +187,6 @@ def _smart_load_submodule(
     return info
 
 
-# ============================================================
-# Attention reduction helpers
-# ============================================================
-
 def _normalize01(arr: np.ndarray) -> np.ndarray:
     arr = arr.astype(np.float32, copy=False)
     amin = np.nanmin(arr)
@@ -227,16 +201,13 @@ def _extract_spatial_attention_map(
     patch_hw: Tuple[int, int],
 ) -> np.ndarray:
     ph, pw = patch_hw
-    dprint("spat_attn container:", _shape_of(spat_attn))
-
     if spat_attn is None:
         return np.zeros((ph, pw), dtype=np.float32)
 
     attn_list = spat_attn if isinstance(spat_attn, (list, tuple)) else [spat_attn]
-
     candidates = []
-    for idx, a in enumerate(attn_list):
-        dprint(f"spat_attn[{idx}] shape:", _shape_of(a))
+
+    for a in attn_list:
         if not torch.is_tensor(a):
             continue
         if a.ndim == 4:
@@ -247,20 +218,14 @@ def _extract_spatial_attention_map(
         return np.zeros((ph, pw), dtype=np.float32)
 
     A = candidates[-1][0]
-    dprint("Selected spatial attention matrix shape:", A.shape)
-
     if A.ndim != 2:
         return np.zeros((ph, pw), dtype=np.float32)
 
     N = A.shape[-1]
-    if N > 1:
-        vec = A[0, 1:]
-    else:
-        vec = A.reshape(-1)
-
+    vec = A[0, 1:] if N > 1 else A.reshape(-1)
     vec = np.asarray(vec, dtype=np.float32).reshape(-1)
-    g = int(np.sqrt(vec.size))
 
+    g = int(np.sqrt(vec.size))
     if g * g == vec.size and g > 0:
         grid = vec.reshape(g, g)
         ry = max(ph // g, 1)
@@ -276,16 +241,13 @@ def _extract_spectral_attention_vector(
     spec_attn: Any,
     num_tokens_fallback: int = 100,
 ) -> np.ndarray:
-    dprint("spec_attn container:", _shape_of(spec_attn))
-
     if spec_attn is None:
         return np.zeros((num_tokens_fallback,), dtype=np.float32)
 
     attn_list = spec_attn if isinstance(spec_attn, (list, tuple)) else [spec_attn]
-
     candidates = []
-    for idx, a in enumerate(attn_list):
-        dprint(f"spec_attn[{idx}] shape:", _shape_of(a))
+
+    for a in attn_list:
         if not torch.is_tensor(a):
             continue
         if a.ndim == 4:
@@ -300,18 +262,10 @@ def _extract_spectral_attention_vector(
         return np.zeros((num_tokens_fallback,), dtype=np.float32)
 
     N = A.shape[-1]
-    if N > 1:
-        vec = A[0, 1:]
-    else:
-        vec = A.reshape(-1)
-
+    vec = A[0, 1:] if N > 1 else A.reshape(-1)
     vec = np.asarray(vec, dtype=np.float32).reshape(-1)
     return _normalize01(vec)
 
-
-# ============================================================
-# Wrapper
-# ============================================================
 
 class HyperSigmaWrapper:
     def __init__(
@@ -333,38 +287,56 @@ class HyperSigmaWrapper:
         self.model.to(self.device)
         self.model.eval()
 
-        dprint("Wrapper initialized with device:", self.device)
-        dprint("Wrapper model_type:", self.model_type)
-
     def _build_target_signature(self, patch_chw: np.ndarray) -> torch.Tensor:
         ts = patch_chw.mean(axis=(1, 2), keepdims=False).astype(np.float32)
         ts = torch.from_numpy(ts).unsqueeze(0).to(self.device)
-        dprint("Target signature tensor shape:", _shape_of(ts))
+        dprint("Auto-built target signature:", _shape_of(ts))
         return ts
 
     @torch.no_grad()
-    def infer_patch(self, patch_chw: np.ndarray) -> Dict[str, np.ndarray]:
+    def infer_patch(
+        self,
+        patch_chw: np.ndarray,
+        target_signature: Optional[np.ndarray | torch.Tensor] = None,
+        return_attn: bool = True,
+        **kwargs,
+    ) -> Dict[str, np.ndarray]:
         if patch_chw.ndim != 3:
             raise ValueError(f"Expected patch shape (C,H,W), got {patch_chw.shape}")
 
-        c, h, w = patch_chw.shape
+        _, h, w = patch_chw.shape
         dprint("infer_patch input patch shape:", patch_chw.shape)
 
         x = torch.from_numpy(patch_chw.astype(np.float32)).unsqueeze(0).to(self.device)
         dprint("Model input x shape:", _shape_of(x))
-        ts = self._build_target_signature(patch_chw)
+
+        if target_signature is None:
+            ts = self._build_target_signature(patch_chw)
+        else:
+            if isinstance(target_signature, np.ndarray):
+                ts = torch.from_numpy(target_signature.astype(np.float32))
+            elif torch.is_tensor(target_signature):
+                ts = target_signature.detach().float()
+            else:
+                raise TypeError(f"Unsupported target_signature type: {type(target_signature)}")
+
+            if ts.ndim == 1:
+                ts = ts.unsqueeze(0)
+            if ts.ndim == 3 and ts.shape[-1] == 1:
+                ts = ts.squeeze(-1)
+            ts = ts.to(self.device)
+            dprint("Provided target signature:", _shape_of(ts))
 
         try:
             if self.model_type == "ss":
-                dprint("Calling SS model forward(return_attn=True)")
-                out = self.model(x, ts, return_attn=True)
+                dprint(f"Calling SS model forward(return_attn={return_attn})")
+                out = self.model(x, ts, return_attn=return_attn)
 
-                dprint("SS model raw output type:", type(out))
-                if isinstance(out, (tuple, list)):
-                    for i, item in enumerate(out):
-                        dprint(f"SS output[{i}] ->", _shape_of(item))
-                else:
+                if not isinstance(out, (tuple, list)):
                     raise RuntimeError("SS model output is not tuple/list")
+
+                for i, item in enumerate(out):
+                    dprint(f"SS output[{i}] ->", _shape_of(item))
 
                 if len(out) < 3:
                     raise RuntimeError("SS model did not return (output, spat_attn, spec_attn)")
@@ -420,10 +392,6 @@ class HyperSigmaWrapper:
             raise
 
 
-# ============================================================
-# Public loader
-# ============================================================
-
 def load_model(
     model_checkpoint: Optional[str] = None,
     *,
@@ -436,7 +404,6 @@ def load_model(
 ) -> HyperSigmaWrapper:
     if in_channels is None:
         raise ValueError("in_channels must be provided to build HyperSIGMA model")
-
     if model_type not in {"ss", "sa"}:
         raise ValueError(f"Unsupported model_type: {model_type}")
 
