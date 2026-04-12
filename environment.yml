@@ -1,0 +1,15 @@
+name: hsi-water-detection
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.9
+  - numpy
+  - torch
+  - rasterio
+  - matplotlib
+  - click
+  - pip
+  - pip:
+      - opencv-python-headless
+      # Add any additional pip-only dependencies here
