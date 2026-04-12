@@ -7,8 +7,10 @@ from pathlib import Path
 from datetime import datetime
 
 from backend.app.services.preview_service import (
+    load_preview_cube,
+    make_probability_overlay_png,
     make_probability_png,
-    make_pseudocolor_png,
+    make_pseudocolor_png_from_cube,
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -96,24 +98,49 @@ def run_inference_pipeline(
         "run_config": output_dir / "run_config.json",
     }
 
-    # Additional preview PNGs for frontend
-    probability_map_png = output_dir / "probability_map.png"
+    # Create preview images from original cube + output arrays
+    preview_cube = load_preview_cube(
+        input_path=input_path,
+        sensor=sensor,
+        row_start=row_start,
+        row_stop=row_stop,
+        col_start=col_start,
+        col_stop=col_stop,
+        xmin=xmin,
+        ymin=ymin,
+        xmax=xmax,
+        ymax=ymax,
+    )
+
     pseudocolor_png = output_dir / "pseudocolor.png"
+    probability_map_png = output_dir / "probability_map.png"
+    probability_overlay_png = output_dir / "probability_overlay.png"
+
+    if preview_cube is not None:
+        make_pseudocolor_png_from_cube(
+            cube=preview_cube,
+            out_png=pseudocolor_png,
+            rgb_bands=(3, 9, 17),
+        )
 
     make_probability_png(
         prob_map_npy=files["probability_map_npy"],
         out_png=probability_map_png,
     )
-    make_pseudocolor_png(
-        spatial_overlay_png=files["spatial_attention_overlay_png"],
-        spatial_attention_png=files["spatial_attention_png"],
-        out_png=pseudocolor_png,
+
+    make_probability_overlay_png(
+        prob_map_npy=files["probability_map_npy"],
+        pseudocolor_png=pseudocolor_png,
+        out_png=probability_overlay_png,
+        alpha=0.45,
     )
 
-    if probability_map_png.exists():
-        files["probability_map_png"] = probability_map_png
     if pseudocolor_png.exists():
         files["pseudocolor_png"] = pseudocolor_png
+    if probability_map_png.exists():
+        files["probability_map_png"] = probability_map_png
+    if probability_overlay_png.exists():
+        files["probability_overlay_png"] = probability_overlay_png
 
     result = {
         "ok": proc.returncode == 0,

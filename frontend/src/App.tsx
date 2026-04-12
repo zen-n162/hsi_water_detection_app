@@ -169,13 +169,13 @@ export default function App() {
                 <ResultCard
                   title="Pseudo Color"
                   imageUrl={urls.pseudocolor_png}
-                  alt="Pseudo color preview"
+                  alt="Pseudo color image"
                 />
 
                 <ResultCard
-                  title="Water Detection"
-                  imageUrl={urls.probability_map_png}
-                  alt="Water detection probability map"
+                  title="Water Detection Overlay"
+                  imageUrl={urls.probability_overlay_png}
+                  alt="Water detection over pseudo color"
                 />
 
                 <ResultCard
