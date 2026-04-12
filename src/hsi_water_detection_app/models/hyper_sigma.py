@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import os
 import sys
 import traceback
@@ -64,6 +65,16 @@ from Target_Detection.models.models import SSHTDFramework, SpatialHTDFramework  
 dprint("Resolved HyperSIGMA root:", _HYPERSIGMA_ROOT)
 dprint("Resolved HyperspectralDetection root:", _HYPERSPECTRAL_DETECTION_ROOT)
 dprint("Resolved Target_Detection root:", _TARGET_DETECTION_ROOT)
+
+
+@contextlib.contextmanager
+def _pushd(path: Path):
+    old = Path.cwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(old)
 
 
 # ============================================================
@@ -219,7 +230,6 @@ def _extract_spatial_attention_map(
     dprint("spat_attn container:", _shape_of(spat_attn))
 
     if spat_attn is None:
-        dprint("spat_attn is None -> returning zeros")
         return np.zeros((ph, pw), dtype=np.float32)
 
     attn_list = spat_attn if isinstance(spat_attn, (list, tuple)) else [spat_attn]
@@ -230,35 +240,26 @@ def _extract_spatial_attention_map(
         if not torch.is_tensor(a):
             continue
         if a.ndim == 4:
-            # expected [B,H,N,N]
             a_np = a.detach().float().mean(dim=1).cpu().numpy()
-            dprint(f"spat_attn[{idx}] reduced to:", a_np.shape)
             candidates.append(a_np)
 
     if not candidates:
-        dprint("No valid spatial attention candidates -> returning zeros")
         return np.zeros((ph, pw), dtype=np.float32)
 
     A = candidates[-1][0]
     dprint("Selected spatial attention matrix shape:", A.shape)
 
     if A.ndim != 2:
-        dprint("Spatial attention selected candidate is not 2D -> returning zeros")
         return np.zeros((ph, pw), dtype=np.float32)
 
     N = A.shape[-1]
-    dprint("Spatial attention token count N:", N)
-
     if N > 1:
         vec = A[0, 1:]
     else:
         vec = A.reshape(-1)
 
     vec = np.asarray(vec, dtype=np.float32).reshape(-1)
-    dprint("Spatial attention vector length:", vec.size)
-
     g = int(np.sqrt(vec.size))
-    dprint("Spatial attention inferred grid:", g, "x", g)
 
     if g * g == vec.size and g > 0:
         grid = vec.reshape(g, g)
@@ -266,10 +267,8 @@ def _extract_spatial_attention_map(
         rx = max(pw // g, 1)
         up = np.repeat(np.repeat(grid, ry, axis=0), rx, axis=1)
         up = up[:ph, :pw]
-        dprint("Spatial attention upsampled shape:", up.shape)
         return _normalize01(up)
 
-    dprint("Spatial attention vector is not square-grid compatible -> returning zeros")
     return np.zeros((ph, pw), dtype=np.float32)
 
 
@@ -280,7 +279,6 @@ def _extract_spectral_attention_vector(
     dprint("spec_attn container:", _shape_of(spec_attn))
 
     if spec_attn is None:
-        dprint("spec_attn is None -> returning zeros")
         return np.zeros((num_tokens_fallback,), dtype=np.float32)
 
     attn_list = spec_attn if isinstance(spec_attn, (list, tuple)) else [spec_attn]
@@ -292,30 +290,22 @@ def _extract_spectral_attention_vector(
             continue
         if a.ndim == 4:
             a_np = a.detach().float().mean(dim=1).cpu().numpy()
-            dprint(f"spec_attn[{idx}] reduced to:", a_np.shape)
             candidates.append(a_np)
 
     if not candidates:
-        dprint("No valid spectral attention candidates -> returning zeros")
         return np.zeros((num_tokens_fallback,), dtype=np.float32)
 
     A = candidates[-1][0]
-    dprint("Selected spectral attention matrix shape:", A.shape)
-
     if A.ndim != 2:
-        dprint("Spectral attention selected candidate is not 2D -> returning zeros")
         return np.zeros((num_tokens_fallback,), dtype=np.float32)
 
     N = A.shape[-1]
-    dprint("Spectral attention token count N:", N)
-
     if N > 1:
         vec = A[0, 1:]
     else:
         vec = A.reshape(-1)
 
     vec = np.asarray(vec, dtype=np.float32).reshape(-1)
-    dprint("Spectral attention vector length:", vec.size)
     return _normalize01(vec)
 
 
@@ -345,12 +335,9 @@ class HyperSigmaWrapper:
 
         dprint("Wrapper initialized with device:", self.device)
         dprint("Wrapper model_type:", self.model_type)
-        dprint("Wrapper spat checkpoint:", self.spat_checkpoint)
-        dprint("Wrapper spec checkpoint:", self.spec_checkpoint)
 
     def _build_target_signature(self, patch_chw: np.ndarray) -> torch.Tensor:
         ts = patch_chw.mean(axis=(1, 2), keepdims=False).astype(np.float32)
-        dprint("Target signature raw shape:", ts.shape)
         ts = torch.from_numpy(ts).unsqueeze(0).to(self.device)
         dprint("Target signature tensor shape:", _shape_of(ts))
         return ts
@@ -365,16 +352,14 @@ class HyperSigmaWrapper:
 
         x = torch.from_numpy(patch_chw.astype(np.float32)).unsqueeze(0).to(self.device)
         dprint("Model input x shape:", _shape_of(x))
-
         ts = self._build_target_signature(patch_chw)
 
         try:
             if self.model_type == "ss":
                 dprint("Calling SS model forward(return_attn=True)")
                 out = self.model(x, ts, return_attn=True)
-                dprint("SS model raw output type:", type(out))
-                dprint("SS model raw output shape summary:", _shape_of(out))
 
+                dprint("SS model raw output type:", type(out))
                 if isinstance(out, (tuple, list)):
                     for i, item in enumerate(out):
                         dprint(f"SS output[{i}] ->", _shape_of(item))
@@ -386,22 +371,13 @@ class HyperSigmaWrapper:
 
                 pred, spat_attn, spec_attn = out[0], out[1], out[2]
 
-                dprint("pred shape:", _shape_of(pred))
-                dprint("spat_attn shape:", _shape_of(spat_attn))
-                dprint("spec_attn shape:", _shape_of(spec_attn))
-
                 pred_sigmoid = torch.sigmoid(pred)
-                dprint("pred after sigmoid shape:", _shape_of(pred_sigmoid))
-
                 pred_np = pred_sigmoid.squeeze(0).detach().cpu().numpy().astype(np.float32)
-                dprint("pred numpy after squeeze(0):", pred_np.shape)
 
                 if pred_np.ndim == 3 and pred_np.shape[0] == 1:
                     pred_np = pred_np[0]
-                    dprint("pred numpy squeezed channel ->", pred_np.shape)
                 elif pred_np.ndim == 3 and pred_np.shape[-1] == 1:
                     pred_np = pred_np[..., 0]
-                    dprint("pred numpy squeezed trailing channel ->", pred_np.shape)
 
                 if pred_np.ndim != 2:
                     raise RuntimeError(f"Expected prob_map to be 2D after squeeze, got {pred_np.shape}")
@@ -413,20 +389,13 @@ class HyperSigmaWrapper:
             else:
                 dprint("Calling SA model forward()")
                 pred = self.model(x, ts)
-                dprint("SA model pred shape:", _shape_of(pred))
-
                 pred_sigmoid = torch.sigmoid(pred)
-                dprint("SA pred after sigmoid shape:", _shape_of(pred_sigmoid))
-
                 pred_np = pred_sigmoid.squeeze(0).detach().cpu().numpy().astype(np.float32)
-                dprint("SA pred numpy after squeeze(0):", pred_np.shape)
 
                 if pred_np.ndim == 3 and pred_np.shape[0] == 1:
                     pred_np = pred_np[0]
-                    dprint("SA pred squeezed channel ->", pred_np.shape)
                 elif pred_np.ndim == 3 and pred_np.shape[-1] == 1:
                     pred_np = pred_np[..., 0]
-                    dprint("SA pred squeezed trailing channel ->", pred_np.shape)
 
                 if pred_np.ndim != 2:
                     raise RuntimeError(f"Expected prob_map to be 2D after squeeze, got {pred_np.shape}")
@@ -492,8 +461,9 @@ def load_model(
 
     try:
         if model_type == "ss":
-            dprint("Building SSHTDFramework ...")
-            model = SSHTDFramework(args=args, img_size=patch_size, in_channels=in_channels)
+            dprint("Building SSHTDFramework with temporary cwd:", _HYPERSPECTRAL_DETECTION_ROOT)
+            with _pushd(_HYPERSPECTRAL_DETECTION_ROOT):
+                model = SSHTDFramework(args=args, img_size=patch_size, in_channels=in_channels)
 
             spat_ckpt = Path(spat_checkpoint) if spat_checkpoint else _default_spat_checkpoint()
             spec_ckpt = Path(spec_checkpoint) if spec_checkpoint else _default_spec_checkpoint()
@@ -515,8 +485,9 @@ def load_model(
             )
             return wrapper
 
-        dprint("Building SpatialHTDFramework ...")
-        model = SpatialHTDFramework(args=args, img_size=patch_size, in_channels=in_channels)
+        dprint("Building SpatialHTDFramework with temporary cwd:", _HYPERSPECTRAL_DETECTION_ROOT)
+        with _pushd(_HYPERSPECTRAL_DETECTION_ROOT):
+            model = SpatialHTDFramework(args=args, img_size=patch_size, in_channels=in_channels)
 
         spat_ckpt = (
             Path(spat_checkpoint)
