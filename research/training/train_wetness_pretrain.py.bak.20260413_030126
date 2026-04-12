@@ -1,0 +1,77 @@
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
+
+import torch
+from torch.utils.data import DataLoader
+
+from research.training.dataloaders import WetnessPatchDataset
+from research.training.losses import confidence_weighted_bce
+from hsi_water_detection_app.models.hyper_sigma import load_model
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Train HyperSIGMA-based wetness detector")
+    parser.add_argument("--input_dir", type=Path, default=Path("datasets/processed/wetness_pretrain"))
+    parser.add_argument("--epochs", type=int, default=1)
+    parser.add_argument("--batch_size", type=int, default=2)
+    parser.add_argument("--device", type=str, default="cuda")
+    parser.add_argument("--model_type", type=str, default="ss", choices=["ss", "sa"])
+    parser.add_argument("--spat_checkpoint", type=str, required=True)
+    parser.add_argument("--spec_checkpoint", type=str, required=False, default=None)
+    parser.add_argument("--patch_size", type=int, default=64)
+    args = parser.parse_args()
+
+    ds = WetnessPatchDataset(args.input_dir)
+    if len(ds) == 0:
+        raise RuntimeError(f"No training patches found in {args.input_dir}")
+
+    dl = DataLoader(ds, batch_size=args.batch_size, shuffle=True)
+
+    sample = ds[0]
+    in_channels = int(sample["cube"].shape[0])
+
+    wrapper = load_model(
+        device=args.device,
+        in_channels=in_channels,
+        patch_size=args.patch_size,
+        model_type=args.model_type,
+        spat_checkpoint=args.spat_checkpoint,
+        spec_checkpoint=args.spec_checkpoint,
+    )
+
+    model = wrapper.model
+    model.train()
+
+    opt = torch.optim.Adam(model.parameters(), lr=1e-5)
+
+    for epoch in range(args.epochs):
+        for batch in dl:
+            x = batch["cube"].to(args.device)
+            y = batch["label"].to(args.device)
+            c = batch["confidence"].to(args.device)
+
+            ts = x.mean(dim=(2, 3))
+            if args.model_type == "ss":
+                out = model(x, ts, return_attn=False)
+            else:
+                out = model(x, ts)
+
+            logits = out.mean(dim=(1, 2))
+            loss = confidence_weighted_bce(logits, y, c)
+
+            opt.zero_grad()
+            loss.backward()
+            opt.step()
+
+        print(f"[INFO] epoch={epoch+1} loss={float(loss):.6f}")
+
+    out_path = Path("experiments/checkpoints/wetness_pretrain_last.pt")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    torch.save(model.state_dict(), out_path)
+    print(f"[INFO] saved checkpoint to {out_path}")
+
+
+if __name__ == "__main__":
+    main()

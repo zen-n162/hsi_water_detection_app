@@ -1,0 +1,98 @@
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+from pathlib import Path
+
+import numpy as np
+
+from hsi_water_detection_app.data.loader import load_hsi_window
+from hsi_water_detection_app.data.preprocessing import normalize_cube, remove_bad_bands
+
+
+def export_one(
+    row: dict[str, str],
+    output_dir: Path,
+) -> Path:
+    input_path = row["input_path"]
+    row_start = int(row["row_start"])
+    row_stop = int(row["row_stop"])
+    col_start = int(row["col_start"])
+    col_stop = int(row["col_stop"])
+
+    cube, meta = load_hsi_window(
+        input_path,
+        row_start=row_start,
+        row_stop=row_stop,
+        col_start=col_start,
+        col_stop=col_stop,
+    )
+    cube, _ = remove_bad_bands(cube, sensor=row.get("sensor", "hyperion"))
+    cube = normalize_cube(cube)
+
+    sample_id = row["sample_id"]
+    out_npz = output_dir / f"{sample_id}.npz"
+    out_json = output_dir / f"{sample_id}.json"
+
+    np.savez_compressed(
+        out_npz,
+        cube=cube.astype(np.float32),
+        label=row["label"],
+        confidence=np.float32(row["confidence"]),
+    )
+
+    out_json.write_text(
+        json.dumps(
+            {
+                "sample_id": sample_id,
+                "scene_id": row["scene_id"],
+                "input_path": input_path,
+                "sensor": row["sensor"],
+                "roi": {
+                    "row_start": row_start,
+                    "row_stop": row_stop,
+                    "col_start": col_start,
+                    "col_stop": col_stop,
+                },
+                "label": row["label"],
+                "confidence": float(row["confidence"]),
+                "meta": meta,
+            },
+            indent=2,
+            ensure_ascii=False,
+            default=str,
+        ),
+        encoding="utf-8",
+    )
+    return out_npz
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Export ROI patches from wetness manifest")
+    parser.add_argument(
+        "--manifest",
+        type=Path,
+        default=Path("annotations/manifests/wetness_manifest.csv"),
+    )
+    parser.add_argument(
+        "--output_dir",
+        type=Path,
+        default=Path("datasets/processed/wetness_pretrain"),
+    )
+    args = parser.parse_args()
+
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+
+    count = 0
+    with args.manifest.open("r", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            export_one(row, args.output_dir)
+            count += 1
+
+    print(f"[INFO] exported {count} ROI patches to {args.output_dir}")
+
+
+if __name__ == "__main__":
+    main()

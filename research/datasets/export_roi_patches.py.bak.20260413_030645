@@ -1,0 +1,128 @@
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+from pathlib import Path
+
+import numpy as np
+
+from hsi_water_detection_app.config import HYPERION_BAD_BANDS_0BASED
+from hsi_water_detection_app.data.loader import load_hsi_window
+from hsi_water_detection_app.data.preprocessing import normalize_cube
+
+
+def apply_sensor_band_policy(cube: np.ndarray, sensor: str) -> np.ndarray:
+    if cube is None:
+        raise ValueError("cube is None")
+
+    sensor = (sensor or "").lower()
+
+    if sensor == "hyperion":
+        # 242-band Hyperion raw stack に対してのみ bad band 除去
+        if cube.shape[0] == 242:
+            bad = set(HYPERION_BAD_BANDS_0BASED)
+            keep = [i for i in range(cube.shape[0]) if i not in bad]
+            cube = cube[keep]
+            print(f"[INFO] apply_sensor_band_policy: Hyperion 242 -> {cube.shape[0]} bands")
+        else:
+            print(f"[INFO] apply_sensor_band_policy: skip bad-band removal because bands={cube.shape[0]}")
+    else:
+        print(f"[INFO] apply_sensor_band_policy: no special rule for sensor={sensor}")
+
+    return cube
+
+
+def export_one(
+    row: dict[str, str],
+    output_dir: Path,
+) -> Path:
+    input_path = row["input_path"]
+    row_start = int(row["row_start"])
+    row_stop = int(row["row_stop"])
+    col_start = int(row["col_start"])
+    col_stop = int(row["col_stop"])
+    sensor = row.get("sensor", "hyperion")
+
+    cube, meta = load_hsi_window(
+        input_path,
+        row_start=row_start,
+        row_stop=row_stop,
+        col_start=col_start,
+        col_stop=col_stop,
+    )
+
+    if cube is None:
+        raise RuntimeError(f"failed to load cube from {input_path}")
+
+    cube = apply_sensor_band_policy(cube, sensor=sensor)
+    cube = normalize_cube(cube)
+
+    sample_id = row["sample_id"]
+    out_npz = output_dir / f"{sample_id}.npz"
+    out_json = output_dir / f"{sample_id}.json"
+
+    # NumPy の .npz は keyword 引数で保存すると、その名前で配列を保持できます。  [oai_citation:0‡NumPy](https://numpy.org/doc/stable/reference/generated/numpy.savez_compressed.html?utm_source=chatgpt.com)
+    np.savez_compressed(
+        out_npz,
+        cube=cube.astype(np.float32),
+        label=np.array(row["label"]),
+        confidence=np.float32(row["confidence"]),
+    )
+
+    out_json.write_text(
+        json.dumps(
+            {
+                "sample_id": sample_id,
+                "scene_id": row["scene_id"],
+                "input_path": input_path,
+                "sensor": sensor,
+                "roi": {
+                    "row_start": row_start,
+                    "row_stop": row_stop,
+                    "col_start": col_start,
+                    "col_stop": col_stop,
+                },
+                "label": row["label"],
+                "confidence": float(row["confidence"]),
+                "meta": meta,
+            },
+            indent=2,
+            ensure_ascii=False,
+            default=str,
+        ),
+        encoding="utf-8",
+    )
+
+    print(f"[INFO] exported sample: {sample_id} -> {out_npz}")
+    return out_npz
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Export ROI patches from wetness manifest")
+    parser.add_argument(
+        "--manifest",
+        type=Path,
+        default=Path("annotations/manifests/wetness_manifest.csv"),
+    )
+    parser.add_argument(
+        "--output_dir",
+        type=Path,
+        default=Path("datasets/processed/wetness_pretrain"),
+    )
+    args = parser.parse_args()
+
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+
+    count = 0
+    with args.manifest.open("r", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            export_one(row, args.output_dir)
+            count += 1
+
+    print(f"[INFO] exported {count} ROI patches to {args.output_dir}")
+
+
+if __name__ == "__main__":
+    main()
