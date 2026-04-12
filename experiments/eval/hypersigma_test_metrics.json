@@ -1,0 +1,76 @@
+{
+  "split": "test",
+  "threshold": 0.5,
+  "n_samples": 8,
+  "n_wet": 4,
+  "n_dry": 4,
+  "roc_auc": 0.125,
+  "pr_auc": 0.3946428571428572,
+  "precision": 0.0,
+  "recall": 0.0,
+  "f1": 0.0,
+  "confusion_matrix": [
+    [
+      4,
+      0
+    ],
+    [
+      4,
+      0
+    ]
+  ],
+  "confusion_matrix_labels": [
+    "dry(0)",
+    "wet(1)"
+  ],
+  "samples": [
+    {
+      "file": "sample_0001.npz",
+      "y_true": 1,
+      "y_score": 6.656283597222812e-13,
+      "y_pred": 0
+    },
+    {
+      "file": "sample_0006.npz",
+      "y_true": 0,
+      "y_score": 0.05384703353047371,
+      "y_pred": 0
+    },
+    {
+      "file": "sample_0022.npz",
+      "y_true": 1,
+      "y_score": 0.03594406694173813,
+      "y_pred": 0
+    },
+    {
+      "file": "sample_0023.npz",
+      "y_true": 1,
+      "y_score": 0.0004180598189122975,
+      "y_pred": 0
+    },
+    {
+      "file": "sample_0024.npz",
+      "y_true": 1,
+      "y_score": 0.040379978716373444,
+      "y_pred": 0
+    },
+    {
+      "file": "sample_0038.npz",
+      "y_true": 0,
+      "y_score": 0.09146478027105331,
+      "y_pred": 0
+    },
+    {
+      "file": "sample_0039.npz",
+      "y_true": 0,
+      "y_score": 0.0013720679562538862,
+      "y_pred": 0
+    },
+    {
+      "file": "sample_0040.npz",
+      "y_true": 0,
+      "y_score": 0.07596134394407272,
+      "y_pred": 0
+    }
+  ]
+}

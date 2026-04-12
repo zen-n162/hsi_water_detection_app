@@ -1,0 +1,77 @@
+{
+  "model_name": "baseline",
+  "split": "test",
+  "threshold": 0.5,
+  "n_samples": 8,
+  "n_wet": 4,
+  "n_dry": 4,
+  "roc_auc": 0.875,
+  "pr_auc": 0.8875,
+  "precision": 1.0,
+  "recall": 0.5,
+  "f1": 0.6666666666666666,
+  "confusion_matrix": [
+    [
+      4,
+      0
+    ],
+    [
+      2,
+      2
+    ]
+  ],
+  "confusion_matrix_labels": [
+    "dry(0)",
+    "wet(1)"
+  ],
+  "samples": [
+    {
+      "file": "sample_0001.npz",
+      "y_true": 1,
+      "y_score": 0.30907872319221497,
+      "y_pred": 0
+    },
+    {
+      "file": "sample_0006.npz",
+      "y_true": 0,
+      "y_score": 0.26112276315689087,
+      "y_pred": 0
+    },
+    {
+      "file": "sample_0022.npz",
+      "y_true": 1,
+      "y_score": 0.8516384363174438,
+      "y_pred": 1
+    },
+    {
+      "file": "sample_0023.npz",
+      "y_true": 1,
+      "y_score": 0.6406669020652771,
+      "y_pred": 1
+    },
+    {
+      "file": "sample_0024.npz",
+      "y_true": 1,
+      "y_score": 0.3012225925922394,
+      "y_pred": 0
+    },
+    {
+      "file": "sample_0038.npz",
+      "y_true": 0,
+      "y_score": 0.2988893687725067,
+      "y_pred": 0
+    },
+    {
+      "file": "sample_0039.npz",
+      "y_true": 0,
+      "y_score": 0.1934160441160202,
+      "y_pred": 0
+    },
+    {
+      "file": "sample_0040.npz",
+      "y_true": 0,
+      "y_score": 0.3477362096309662,
+      "y_pred": 0
+    }
+  ]
+}
