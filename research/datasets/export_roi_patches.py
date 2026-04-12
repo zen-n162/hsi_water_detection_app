@@ -12,6 +12,10 @@ from hsi_water_detection_app.data.loader import load_hsi_window
 from hsi_water_detection_app.data.preprocessing import normalize_cube
 
 
+EXPECTED_PATCH_H = 64
+EXPECTED_PATCH_W = 64
+
+
 def apply_sensor_band_policy(cube: np.ndarray, sensor: str) -> np.ndarray:
     if cube is None:
         raise ValueError("cube is None")
@@ -33,23 +37,17 @@ def apply_sensor_band_policy(cube: np.ndarray, sensor: str) -> np.ndarray:
 
 
 def has_todo_placeholder(row: dict[str, str]) -> bool:
-    keys = ["row_start", "row_stop", "col_start", "col_stop"]
-    for k in keys:
-        v = str(row.get(k, ""))
-        if "TODO_" in v:
+    for k in ["row_start", "row_stop", "col_start", "col_stop"]:
+        if "TODO_" in str(row.get(k, "")):
             return True
     return False
 
 
 def parse_int_field(row: dict[str, str], key: str) -> int:
-    value = str(row[key]).strip()
-    return int(value)
+    return int(str(row[key]).strip())
 
 
-def export_one(
-    row: dict[str, str],
-    output_dir: Path,
-) -> Path:
+def export_one(row: dict[str, str], output_dir: Path) -> Path:
     input_path = row["input_path"]
     row_start = parse_int_field(row, "row_start")
     row_stop = parse_int_field(row, "row_stop")
@@ -67,6 +65,11 @@ def export_one(
 
     if cube is None:
         raise RuntimeError(f"failed to load cube from {input_path}")
+
+    if cube.shape[1] != EXPECTED_PATCH_H or cube.shape[2] != EXPECTED_PATCH_W:
+        raise ValueError(
+            f"patch shape mismatch: got {cube.shape}, expected bands x {EXPECTED_PATCH_H} x {EXPECTED_PATCH_W}"
+        )
 
     cube = apply_sensor_band_policy(cube, sensor=sensor)
     cube = normalize_cube(cube)
