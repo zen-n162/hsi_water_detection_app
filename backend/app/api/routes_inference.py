@@ -26,15 +26,15 @@ async def run_inference(
     ymax: float | None = Form(default=None),
 ):
     with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = Path(tmpdir)
+        tmpdir_path = Path(tmpdir)
 
-        hsi_path = tmpdir / hsi_file.filename
+        hsi_path = tmpdir_path / hsi_file.filename
         with hsi_path.open("wb") as f:
             shutil.copyfileobj(hsi_file.file, f)
 
         wavelength_path = None
         if wavelength_file is not None:
-            wavelength_path = tmpdir / wavelength_file.filename
+            wavelength_path = tmpdir_path / wavelength_file.filename
             with wavelength_path.open("wb") as f:
                 shutil.copyfileobj(wavelength_file.file, f)
 

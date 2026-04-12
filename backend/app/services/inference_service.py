@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from pathlib import Path
 from datetime import datetime
@@ -61,7 +62,7 @@ def run_inference_pipeline(
             "--ymax", str(ymax),
         ]
 
-    env = dict(**__import__("os").environ)
+    env = dict(os.environ)
     env["PYTHONPATH"] = "src"
 
     proc = subprocess.run(
@@ -78,10 +79,15 @@ def run_inference_pipeline(
         "stderr": proc.stderr,
         "output_dir": str(output_dir),
         "files": {
-            "probability_map": str(output_dir / "probability_map.tif"),
-            "spatial_attention": str(output_dir / "spatial_attention.tif"),
-            "spatial_attention_overlay": str(output_dir / "spatial_attention_overlay.png"),
-            "spectral_attention_plot": str(output_dir / "spectral_attention.png"),
+            "probability_map_json": str(output_dir / "probability_map.json"),
+            "probability_map_npy": str(output_dir / "probability_map.npy"),
+            "probability_map_tif": str(output_dir / "probability_map.tif"),
+            "spatial_attention_npy": str(output_dir / "spatial_attention.npy"),
+            "spatial_attention_png": str(output_dir / "spatial_attention.png"),
+            "spatial_attention_tif": str(output_dir / "spatial_attention.tif"),
+            "spatial_attention_overlay_png": str(output_dir / "spatial_attention_overlay.png"),
+            "spectral_attention_csv": str(output_dir / "spectral_attention.csv"),
+            "spectral_attention_png": str(output_dir / "spectral_attention.png"),
             "run_config": str(output_dir / "run_config.json"),
         },
     }
@@ -90,4 +96,5 @@ def run_inference_pipeline(
         json.dumps(result, indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
+
     return result
