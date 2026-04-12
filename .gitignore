@@ -20,3 +20,6 @@ models/checkpoints/*
 
 results/
 logs/
+
+results/
+results_real/
