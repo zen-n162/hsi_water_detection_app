@@ -14,7 +14,15 @@ async def run_inference(
     wavelength_file: UploadFile | None = File(default=None),
     sensor: str = Form("auto"),
     device: str = Form("cpu"),
-    model_checkpoint: str = Form("dummy.pth"),
+
+    # legacy
+    model_checkpoint: str | None = Form(default=None),
+
+    # new dual-checkpoint inputs
+    spat_checkpoint: str | None = Form(default=None),
+    spec_checkpoint: str | None = Form(default=None),
+
+    model_type: str = Form("ss"),
     patch_size: int = Form(64),
     stride: int = Form(32),
     row_start: int | None = Form(default=None),
@@ -45,6 +53,9 @@ async def run_inference(
             sensor=sensor,
             device=device,
             model_checkpoint=model_checkpoint,
+            spat_checkpoint=spat_checkpoint,
+            spec_checkpoint=spec_checkpoint,
+            model_type=model_type,
             patch_size=patch_size,
             stride=stride,
             row_start=row_start,

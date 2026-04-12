@@ -22,13 +22,25 @@ def to_public_url(path: Path) -> str:
     return f"{PUBLIC_BASE_URL}/{rel.as_posix()}"
 
 
+def _resolve_optional_path(p: str | None) -> str | None:
+    if not p:
+        return None
+    path = Path(p)
+    if not path.is_absolute():
+        path = (PROJECT_ROOT / path).resolve()
+    return str(path)
+
+
 def run_inference_pipeline(
     *,
     input_path: str,
     header_path: str | None,
     sensor: str,
     device: str,
-    model_checkpoint: str,
+    model_checkpoint: str | None,
+    spat_checkpoint: str | None,
+    spec_checkpoint: str | None,
+    model_type: str,
     patch_size: int,
     stride: int,
     row_start: int | None,
@@ -43,22 +55,29 @@ def run_inference_pipeline(
     output_dir = PROJECT_ROOT / "outputs" / "web_ui" / datetime.now().strftime("%Y-%m-%d_%H%M%S")
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    ckpt_path = Path(model_checkpoint)
-    if not ckpt_path.is_absolute():
-        ckpt_path = (PROJECT_ROOT / ckpt_path).resolve()
+    resolved_model_checkpoint = _resolve_optional_path(model_checkpoint)
+    resolved_spat_checkpoint = _resolve_optional_path(spat_checkpoint)
+    resolved_spec_checkpoint = _resolve_optional_path(spec_checkpoint)
 
     cmd = [
         "python",
         "-m",
         "hsi_water_detection_app.cli",
         "--input", input_path,
-        "--model_checkpoint", str(ckpt_path),
         "--sensor", sensor,
         "--device", device,
+        "--model_type", model_type,
         "--patch_size", str(patch_size),
         "--stride", str(stride),
         "--output_dir", str(output_dir),
     ]
+
+    if resolved_model_checkpoint:
+        cmd += ["--model_checkpoint", resolved_model_checkpoint]
+    if resolved_spat_checkpoint:
+        cmd += ["--spat_checkpoint", resolved_spat_checkpoint]
+    if resolved_spec_checkpoint:
+        cmd += ["--spec_checkpoint", resolved_spec_checkpoint]
 
     if header_path:
         cmd += ["--header", header_path]
@@ -151,7 +170,10 @@ def run_inference_pipeline(
         "stdout": proc.stdout,
         "stderr": proc.stderr,
         "output_dir": str(output_dir),
-        "resolved_model_checkpoint": str(ckpt_path),
+        "resolved_model_checkpoint": resolved_model_checkpoint,
+        "resolved_spat_checkpoint": resolved_spat_checkpoint,
+        "resolved_spec_checkpoint": resolved_spec_checkpoint,
+        "model_type": model_type,
         "files": {k: str(v) for k, v in files.items()},
         "urls": {k: to_public_url(v) for k, v in files.items() if v.exists()},
     }

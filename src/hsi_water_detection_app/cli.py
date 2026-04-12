@@ -36,7 +36,14 @@ def build_parser():
     parser.add_argument("--input", type=str, required=True, help="Path to input HSI file")
     parser.add_argument("--header", type=str, default=None, help="Optional ENVI header file or wavelength sidecar")
     parser.add_argument("--output_dir", type=str, default=None, help="Optional explicit output directory")
-    parser.add_argument("--model_checkpoint", type=str, required=True, help="Path to model checkpoint")
+
+    # backward compatible
+    parser.add_argument("--model_checkpoint", type=str, default=None, help="Legacy single checkpoint path")
+
+    # new dual-checkpoint mode
+    parser.add_argument("--spat_checkpoint", type=str, default=None, help="Path to spatial encoder checkpoint")
+    parser.add_argument("--spec_checkpoint", type=str, default=None, help="Path to spectral encoder checkpoint")
+
     parser.add_argument("--patch_size", type=int, default=DEFAULT_PATCH_SIZE, help="Patch size")
     parser.add_argument("--stride", type=int, default=DEFAULT_STRIDE, help="Patch stride")
     parser.add_argument("--device", type=str, default="cpu", choices=["cpu", "cuda"], help="Inference device")
@@ -46,6 +53,14 @@ def build_parser():
         default="auto",
         choices=["auto", "hyperion", "hisui", "generic"],
         help="Sensor type",
+    )
+
+    parser.add_argument(
+        "--model_type",
+        type=str,
+        default="ss",
+        choices=["ss", "sa"],
+        help="HyperSIGMA wrapper mode: ss=spatial+spectral, sa=spatial-only",
     )
 
     # Pixel ROI
@@ -189,10 +204,13 @@ def main():
     cube = normalize_cube(cube)
 
     model = load_model(
-        args.model_checkpoint,
+        model_checkpoint=args.model_checkpoint,
         device=args.device,
         in_channels=None if cube is None else cube.shape[0],
         patch_size=args.patch_size,
+        model_type=args.model_type,
+        spat_checkpoint=args.spat_checkpoint,
+        spec_checkpoint=args.spec_checkpoint,
     )
 
     if cube is None:
@@ -226,8 +244,11 @@ def main():
             "input": args.input,
             "header": args.header,
             "model_checkpoint": args.model_checkpoint,
+            "spat_checkpoint": args.spat_checkpoint,
+            "spec_checkpoint": args.spec_checkpoint,
             "device": args.device,
             "sensor": sensor,
+            "model_type": args.model_type,
             "meta": meta,
             "crs": meta.get("crs"),
             "transform": meta.get("transform"),
@@ -256,10 +277,13 @@ def main():
         "input": args.input,
         "header": args.header,
         "model_checkpoint": args.model_checkpoint,
+        "spat_checkpoint": args.spat_checkpoint,
+        "spec_checkpoint": args.spec_checkpoint,
         "patch_size": args.patch_size,
         "stride": args.stride,
         "device": args.device,
         "sensor": sensor,
+        "model_type": args.model_type,
         "row_start": args.row_start,
         "row_stop": args.row_stop,
         "col_start": args.col_start,

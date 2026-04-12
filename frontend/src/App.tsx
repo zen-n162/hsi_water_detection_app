@@ -42,7 +42,16 @@ export default function App() {
   const [wavelengthFile, setWavelengthFile] = useState<File | null>(null);
   const [sensor, setSensor] = useState("hyperion");
   const [device, setDevice] = useState("cuda");
-  const [modelCheckpoint, setModelCheckpoint] = useState("dummy.pth");
+  const [modelType, setModelType] = useState("ss");
+
+  const [modelCheckpoint, setModelCheckpoint] = useState("");
+  const [spatCheckpoint, setSpatCheckpoint] = useState(
+    "/home/zennakamura/MasterResearch/HyperSIGMA/HyperspectralDetection/spat-vit-b-checkpoint-1599.pth"
+  );
+  const [specCheckpoint, setSpecCheckpoint] = useState(
+    "/home/zennakamura/MasterResearch/HyperSIGMA/HyperspectralDetection/spec-vit-b-checkpoint-1599.pth"
+  );
+
   const [xmin, setXmin] = useState("563000");
   const [ymin, setYmin] = useState("1405000");
   const [xmax, setXmax] = useState("567000");
@@ -68,7 +77,18 @@ export default function App() {
 
     formData.append("sensor", sensor);
     formData.append("device", device);
-    formData.append("model_checkpoint", modelCheckpoint);
+    formData.append("model_type", modelType);
+
+    if (modelCheckpoint.trim()) {
+      formData.append("model_checkpoint", modelCheckpoint.trim());
+    }
+    if (spatCheckpoint.trim()) {
+      formData.append("spat_checkpoint", spatCheckpoint.trim());
+    }
+    if (specCheckpoint.trim()) {
+      formData.append("spec_checkpoint", specCheckpoint.trim());
+    }
+
     formData.append("xmin", xmin);
     formData.append("ymin", ymin);
     formData.append("xmax", xmax);
@@ -135,11 +155,39 @@ export default function App() {
           </div>
 
           <div style={{ marginBottom: "12px" }}>
-            <label>Checkpoint path: </label>
+            <label>Model type: </label>
+            <select value={modelType} onChange={(e) => setModelType(e.target.value)}>
+              <option value="ss">ss (spatial + spectral)</option>
+              <option value="sa">sa (spatial only)</option>
+            </select>
+          </div>
+
+          <div style={{ marginBottom: "12px" }}>
+            <label>Legacy single checkpoint (optional): </label>
             <input
               value={modelCheckpoint}
               onChange={(e) => setModelCheckpoint(e.target.value)}
-              placeholder="e.g. src/checkpoints/model.pth"
+              placeholder="optional legacy model checkpoint"
+              style={{ width: "100%" }}
+            />
+          </div>
+
+          <div style={{ marginBottom: "12px" }}>
+            <label>Spatial checkpoint: </label>
+            <input
+              value={spatCheckpoint}
+              onChange={(e) => setSpatCheckpoint(e.target.value)}
+              placeholder="/path/to/spat-vit-....pth"
+              style={{ width: "100%" }}
+            />
+          </div>
+
+          <div style={{ marginBottom: "12px" }}>
+            <label>Spectral checkpoint: </label>
+            <input
+              value={specCheckpoint}
+              onChange={(e) => setSpecCheckpoint(e.target.value)}
+              placeholder="/path/to/spec-vit-....pth"
               style={{ width: "100%" }}
             />
           </div>
@@ -159,7 +207,10 @@ export default function App() {
             <div style={{ marginTop: "20px", fontSize: "0.92rem" }}>
               <div><strong>Success:</strong> {String(result.ok)}</div>
               <div><strong>Output dir:</strong> {result.output_dir}</div>
-              <div><strong>Resolved checkpoint:</strong> {result.resolved_model_checkpoint}</div>
+              <div><strong>Resolved model checkpoint:</strong> {result.resolved_model_checkpoint || "(none)"}</div>
+              <div><strong>Resolved spat checkpoint:</strong> {result.resolved_spat_checkpoint || "(none)"}</div>
+              <div><strong>Resolved spec checkpoint:</strong> {result.resolved_spec_checkpoint || "(none)"}</div>
+              <div><strong>Model type:</strong> {result.model_type}</div>
             </div>
           )}
         </div>
