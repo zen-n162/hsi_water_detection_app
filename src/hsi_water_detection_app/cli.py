@@ -112,7 +112,7 @@ def main():
             f"cols=({args.col_start}, {args.col_stop})"
         )
     else:
-        cube, meta = load_hsi_cube(args.input, allow_dummy=True)
+        cube, meta = load_hsi_cube(args.input, allow_dummy=True, sensor=args.sensor if args.sensor != "auto" else None)
 
     wavelengths = None
     if args.header:
