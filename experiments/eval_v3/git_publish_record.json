@@ -1,0 +1,25 @@
+{
+  "generated_at": "2026-04-17T05:36:00+09:00",
+  "remote_name": "origin",
+  "remote_url": "git@github.com:zen-n162/hsi_water_detection_app.git",
+  "pushed_branch": "feature/web-ui",
+  "freeze_tag": "hypersigma-v3-calibrated-prod-candidate",
+  "freeze_commit_hash": "6a161034d8f2fbbf44bd81836f3aa72f216b9183",
+  "push_branch_ok": false,
+  "push_tag_ok": false,
+  "attempts": [
+    {
+      "target": "branch",
+      "command": "GIT_SSH_COMMAND='ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -p 22' git -C /home/zennakamura/MasterResearch/hsi_water_detection_app push origin feature/web-ui",
+      "status": "failed",
+      "error": "git@github.com: Permission denied (publickey)."
+    },
+    {
+      "target": "tag",
+      "command": "GIT_SSH_COMMAND='ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -p 22' git -C /home/zennakamura/MasterResearch/hsi_water_detection_app push origin hypersigma-v3-calibrated-prod-candidate",
+      "status": "failed",
+      "error": "ssh: connect to host github.com port 50505: Connection timed out"
+    }
+  ],
+  "notes": "Origin was updated from HTTPS to SSH as requested. Network reachability to github.com on port 22 was confirmed, but GitHub SSH authentication failed because no usable private key was available in this environment."
+}

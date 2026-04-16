@@ -3,13 +3,11 @@ from __future__ import annotations
 import json
 import os
 import subprocess
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
-from backend.app.services.deploy_config_service import (
-    load_deploy_config_bundle,
-)
+from backend.app.services.deploy_config_service import load_deploy_config_bundle
 from backend.app.services.preview_service import (
     load_preview_cube,
     make_probability_overlay_png,
@@ -18,13 +16,12 @@ from backend.app.services.preview_service import (
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-PUBLIC_BASE_URL = "http://127.0.0.1:8000"
 DEFAULT_INFERENCE_CONDA_ENV = "HyperSIGMA"
 
 
 def to_public_url(path: Path) -> str:
-    rel = path.relative_to(PROJECT_ROOT)
-    return f"{PUBLIC_BASE_URL}/{rel.as_posix()}"
+    rel = path.resolve().relative_to(PROJECT_ROOT.resolve())
+    return f"/{rel.as_posix()}"
 
 
 def _resolve_optional_path(p: str | None) -> str | None:
@@ -66,6 +63,10 @@ def _first_non_none(*values):
     return None
 
 
+def _existing_file_map(files: dict[str, Path]) -> dict[str, Path]:
+    return {k: v for k, v in files.items() if v.exists()}
+
+
 def run_inference_pipeline(
     *,
     input_path: str,
@@ -73,9 +74,9 @@ def run_inference_pipeline(
     sensor: str,
     device: str,
     deploy_config_path: str | None = None,
-    model_checkpoint: str | None,
-    spat_checkpoint: str | None,
-    spec_checkpoint: str | None,
+    model_checkpoint: str | None = None,
+    spat_checkpoint: str | None = None,
+    spec_checkpoint: str | None = None,
     temperature: float | None = None,
     temperature_json: str | None = None,
     decision_threshold: float | None = None,
@@ -85,15 +86,15 @@ def run_inference_pipeline(
     model_type: str | None = None,
     patch_size: int | None = None,
     stride: int | None = None,
-    row_start: int | None,
-    row_stop: int | None,
-    col_start: int | None,
-    col_stop: int | None,
-    xmin: float | None,
-    ymin: float | None,
-    xmax: float | None,
-    ymax: float | None,
-):
+    row_start: int | None = None,
+    row_stop: int | None = None,
+    col_start: int | None = None,
+    col_stop: int | None = None,
+    xmin: float | None = None,
+    ymin: float | None = None,
+    xmax: float | None = None,
+    ymax: float | None = None,
+) -> dict[str, Any]:
     output_dir = PROJECT_ROOT / "outputs" / "web_ui" / datetime.now().strftime("%Y-%m-%d_%H%M%S")
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -128,10 +129,8 @@ def run_inference_pipeline(
     resolved_run_name = deploy_resolved.get("run_name")
     resolved_band_count = deploy_resolved.get("band_count")
 
-    if not resolved_model_checkpoint:
-        raise ValueError(
-            f"model_checkpoint is required after resolving deploy config: {deploy_config_path_resolved}"
-        )
+    if not resolved_model_checkpoint and not resolved_spat_checkpoint:
+        raise ValueError("Either model_checkpoint or spat_checkpoint must resolve to a valid value.")
 
     cmd = [
         *_build_python_command(),
@@ -165,7 +164,6 @@ def run_inference_pipeline(
         cmd += ["--patch_dataset_path", resolved_patch_dataset_path]
     if resolved_split_policy:
         cmd += ["--split_policy", str(resolved_split_policy)]
-
     if header_path:
         cmd += ["--header", header_path]
 
@@ -186,7 +184,7 @@ def run_inference_pipeline(
         ]
 
     env = dict(os.environ)
-    env["PYTHONPATH"] = "src"
+    env["PYTHONPATH"] = "src:."
 
     proc = subprocess.run(
         cmd,
@@ -196,7 +194,7 @@ def run_inference_pipeline(
         text=True,
     )
 
-    files = {
+    files: dict[str, Path] = {
         "probability_map_json": output_dir / "probability_map.json",
         "probability_map_npy": output_dir / "probability_map.npy",
         "probability_map_tif": output_dir / "probability_map.tif",
@@ -206,7 +204,7 @@ def run_inference_pipeline(
         "spatial_attention_overlay_png": output_dir / "spatial_attention_overlay.png",
         "spectral_attention_csv": output_dir / "spectral_attention.csv",
         "spectral_attention_png": output_dir / "spectral_attention.png",
-        "run_config": output_dir / "run_config.json",
+        "run_config_json": output_dir / "run_config.json",
         "metadata_json": output_dir / "metadata.json",
         "api_result_json": output_dir / "api_result.json",
     }
@@ -235,18 +233,17 @@ def run_inference_pipeline(
                 out_png=pseudocolor_png,
                 rgb_bands=(3, 9, 17),
             )
-
         make_probability_png(
             prob_map_npy=files["probability_map_npy"],
             out_png=probability_map_png,
         )
-
-        make_probability_overlay_png(
-            prob_map_npy=files["probability_map_npy"],
-            pseudocolor_png=pseudocolor_png,
-            out_png=probability_overlay_png,
-            alpha=0.45,
-        )
+        if pseudocolor_png.exists():
+            make_probability_overlay_png(
+                prob_map_npy=files["probability_map_npy"],
+                pseudocolor_png=pseudocolor_png,
+                out_png=probability_overlay_png,
+                alpha=0.45,
+            )
     else:
         preview_error = (
             "Skipped preview artifact generation because the CLI command failed "
@@ -260,7 +257,27 @@ def run_inference_pipeline(
     if probability_overlay_png.exists():
         files["probability_overlay_png"] = probability_overlay_png
 
-    result = {
+    cli_run_config = _load_json_if_exists(output_dir / "run_config.json")
+
+    resolved_temperature = cli_run_config.get("resolved_temperature", resolved_temperature)
+    resolved_temperature_json = cli_run_config.get("resolved_temperature_json", resolved_temperature_json)
+    resolved_threshold = cli_run_config.get("decision_threshold", resolved_threshold)
+    resolved_manifest_path = cli_run_config.get("manifest_path", resolved_manifest_path)
+    resolved_patch_dataset_path = cli_run_config.get("patch_dataset_path", resolved_patch_dataset_path)
+    resolved_split_policy = cli_run_config.get("split_policy", resolved_split_policy)
+    resolved_run_name = cli_run_config.get("resolved_run_name", resolved_run_name)
+    resolved_band_count = cli_run_config.get("band_count", resolved_band_count)
+    resolved_model_type = cli_run_config.get("model_type", resolved_model_type)
+    resolved_patch_size = cli_run_config.get("patch_size", resolved_patch_size)
+    resolved_stride = cli_run_config.get("stride", resolved_stride)
+    requested_device = cli_run_config.get("requested_device", device)
+    executed_device = cli_run_config.get("executed_device", device)
+
+    existing_files = _existing_file_map(files)
+    file_map = {k: str(v) for k, v in existing_files.items()}
+    url_map = {k: to_public_url(v) for k, v in existing_files.items()}
+
+    result: dict[str, Any] = {
         "ok": proc.returncode == 0,
         "stdout": proc.stdout,
         "stderr": proc.stderr,
@@ -281,42 +298,38 @@ def run_inference_pipeline(
         "resolved_model_type": resolved_model_type,
         "resolved_patch_size": resolved_patch_size,
         "resolved_stride": resolved_stride,
-        "requested_device": device,
-        "executed_device": device,
+        "requested_device": requested_device,
+        "executed_device": executed_device,
         "model_type": resolved_model_type,
         "preview_generation_error": preview_error,
-        "files": {k: str(v) for k, v in files.items()},
-        "urls": {k: to_public_url(v) for k, v in files.items() if v.exists()},
+        "files": file_map,
+        "urls": url_map,
+
+        # frontend が直接使うトップレベルURL
+        "pseudocolor_url": url_map.get("pseudocolor_png"),
+        "probability_map_url": url_map.get("probability_map_png"),
+        "probability_overlay_url": url_map.get("probability_overlay_png"),
+        "spatial_attention_url": url_map.get("spatial_attention_png"),
+        "spatial_attention_overlay_url": url_map.get("spatial_attention_overlay_png"),
+        "spectral_attention_url": url_map.get("spectral_attention_png"),
+        "metadata_url": url_map.get("metadata_json"),
+        "api_result_url": url_map.get("api_result_json"),
     }
 
-    cli_run_config = _load_json_if_exists(output_dir / "run_config.json")
-    result["resolved_temperature"] = cli_run_config.get("resolved_temperature", result["resolved_temperature"])
-    result["resolved_temperature_json"] = cli_run_config.get("resolved_temperature_json", result["resolved_temperature_json"])
-    result["resolved_threshold"] = cli_run_config.get("decision_threshold", result["resolved_threshold"])
-    result["resolved_manifest"] = cli_run_config.get("manifest_path", result["resolved_manifest"])
-    result["resolved_dataset"] = cli_run_config.get("patch_dataset_path", result["resolved_dataset"])
-    result["resolved_split_policy"] = cli_run_config.get("split_policy", result["resolved_split_policy"])
-    result["resolved_run_name"] = cli_run_config.get("resolved_run_name", result["resolved_run_name"])
-    result["resolved_band_count"] = cli_run_config.get("band_count", result["resolved_band_count"])
-    result["resolved_model_type"] = cli_run_config.get("model_type", result["resolved_model_type"])
-    result["resolved_patch_size"] = cli_run_config.get("patch_size", result["resolved_patch_size"])
-    result["resolved_stride"] = cli_run_config.get("stride", result["resolved_stride"])
-    result["requested_device"] = cli_run_config.get("requested_device", result["requested_device"])
-    result["executed_device"] = cli_run_config.get("executed_device", result["executed_device"])
     result["model_provenance"] = {
         "deploy_config_path": deploy_config_path_resolved,
         "deploy_name": deploy_resolved.get("deploy_name"),
-        "run_name": cli_run_config.get("resolved_run_name", resolved_run_name),
-        "manifest_path": cli_run_config.get("manifest_path", resolved_manifest_path),
-        "patch_dataset_path": cli_run_config.get("patch_dataset_path", resolved_patch_dataset_path),
-        "model_checkpoint_path": cli_run_config.get("model_checkpoint", resolved_model_checkpoint),
-        "spat_checkpoint_path": cli_run_config.get("spat_checkpoint", resolved_spat_checkpoint),
-        "spec_checkpoint_path": cli_run_config.get("spec_checkpoint", resolved_spec_checkpoint),
-        "calibration_file_path": cli_run_config.get("resolved_temperature_json", resolved_temperature_json),
-        "temperature": cli_run_config.get("resolved_temperature", resolved_temperature),
-        "threshold": cli_run_config.get("decision_threshold", resolved_threshold),
-        "split_policy": cli_run_config.get("split_policy", resolved_split_policy),
-        "band_count": cli_run_config.get("band_count", resolved_band_count),
+        "run_name": resolved_run_name,
+        "manifest_path": resolved_manifest_path,
+        "patch_dataset_path": resolved_patch_dataset_path,
+        "model_checkpoint_path": resolved_model_checkpoint,
+        "spat_checkpoint_path": resolved_spat_checkpoint,
+        "spec_checkpoint_path": resolved_spec_checkpoint,
+        "calibration_file_path": resolved_temperature_json,
+        "temperature": resolved_temperature,
+        "threshold": resolved_threshold,
+        "split_policy": resolved_split_policy,
+        "band_count": resolved_band_count,
         "reference_models": deploy_resolved.get("reference_models", {}),
     }
     result["deploy_config"] = deploy_bundle["deploy_config"]
@@ -327,6 +340,8 @@ def run_inference_pipeline(
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "deploy_config_path": deploy_config_path_resolved,
         "resolved_model_checkpoint": result["resolved_model_checkpoint"],
+        "resolved_spat_checkpoint": result["resolved_spat_checkpoint"],
+        "resolved_spec_checkpoint": result["resolved_spec_checkpoint"],
         "resolved_temperature_json": result["resolved_temperature_json"],
         "resolved_temperature": result["resolved_temperature"],
         "resolved_threshold": result["resolved_threshold"],
@@ -344,23 +359,15 @@ def run_inference_pipeline(
         "created_from": result["created_from"],
         "files": result["files"],
         "urls": result["urls"],
+        "pseudocolor_url": result["pseudocolor_url"],
+        "probability_map_url": result["probability_map_url"],
+        "probability_overlay_url": result["probability_overlay_url"],
+        "spatial_attention_url": result["spatial_attention_url"],
+        "spatial_attention_overlay_url": result["spatial_attention_overlay_url"],
+        "spectral_attention_url": result["spectral_attention_url"],
     }
-    files["metadata_json"].write_text(
-        json.dumps(metadata, indent=2, ensure_ascii=False),
-        encoding="utf-8",
-    )
 
-    (output_dir / "api_result.json").write_text(
-        json.dumps(result, indent=2, ensure_ascii=False),
-        encoding="utf-8",
-    )
-    result["urls"] = {k: to_public_url(v) for k, v in files.items() if v.exists()}
-    files["api_result_json"] = output_dir / "api_result.json"
-    result["files"]["api_result_json"] = str(files["api_result_json"])
-    result["urls"] = {k: to_public_url(v) for k, v in files.items() if v.exists()}
-    metadata["files"] = result["files"]
-    metadata["urls"] = result["urls"]
-    files["metadata_json"].write_text(
+    (output_dir / "metadata.json").write_text(
         json.dumps(metadata, indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
