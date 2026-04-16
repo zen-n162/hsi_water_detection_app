@@ -9,6 +9,9 @@ venv/
 dist/
 build/
 *.egg-info/
+a.txt
+*.bak
+*.bak.*
 
 data/raw/*
 data/processed/*
@@ -45,6 +48,26 @@ results_roi/
 results_roi_bounds/
 results_roi_test/
 results_roi_bounds_adapter/
+
+# generated wetness datasets and temp exports
+datasets/processed/
+!datasets/processed/.gitkeep
+
+# generated experiment outputs
+experiments/checkpoints/
+experiments/eval/
+experiments/eval_v2/
+experiments/runs/
+experiments/runs_v2/
+experiments/runs_v3/**/*.pt
+
+# temporary manifests and audits
+annotations/manifests/_tmp_block_*
+experiments/eval_v3/_tmp_block_*.audit.json
+
+# local scratch files
+run_hypersigma_finetune_grid.sh
+sprint2_checklist.txt
 
 # generated outputs
 outputs/
