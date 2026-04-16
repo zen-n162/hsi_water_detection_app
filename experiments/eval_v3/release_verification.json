@@ -1,0 +1,20 @@
+{
+  "generated_at": "2026-04-17T05:19:46",
+  "git_commit_hash": "6a161034d8f2fbbf44bd81836f3aa72f216b9183",
+  "git_tag": "hypersigma-v3-calibrated-prod-candidate",
+  "backend_import_ok": true,
+  "frontend_build_ok": true,
+  "deploy_consistency_audit_ok": true,
+  "gui_acceptance_ok": true,
+  "overall_ok": true,
+  "executed_device": "cuda",
+  "resolved_model_checkpoint": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/model_best.pt",
+  "resolved_temperature_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/temperature_scaling_val.json",
+  "resolved_threshold": 0.327428693347738,
+  "resolved_run_name": "E02_head_only_posw_v3_block224",
+  "resolved_manifest": "/home/zennakamura/MasterResearch/hsi_water_detection_app/annotations/manifests/wetness_manifest_from_confidence_ali_blocksplit.csv",
+  "resolved_dataset": "/home/zennakamura/MasterResearch/hsi_water_detection_app/datasets/processed/wetness_pretrain_v3",
+  "smoke_result_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/eval_v3/gui_smoke_test_result.json",
+  "deploy_consistency_audit_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/eval_v3/deploy_consistency_audit.json",
+  "gui_acceptance_result_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/eval_v3/gui_acceptance_result.json"
+}

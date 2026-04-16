@@ -1,0 +1,8 @@
+{
+  "generated_at": "2026-04-17T05:19:46",
+  "freeze_commit_hash": "6a161034d8f2fbbf44bd81836f3aa72f216b9183",
+  "freeze_tag": "hypersigma-v3-calibrated-prod-candidate",
+  "release_freeze_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/eval_v3/release_freeze.json",
+  "release_verification_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/eval_v3/release_verification.json",
+  "gpu_acceptance_passed": true
+}
