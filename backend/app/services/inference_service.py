@@ -5,6 +5,7 @@ import os
 import subprocess
 from pathlib import Path
 from datetime import datetime
+from typing import Any
 
 from backend.app.services.preview_service import (
     load_preview_cube,
@@ -15,6 +16,7 @@ from backend.app.services.preview_service import (
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 PUBLIC_BASE_URL = "http://127.0.0.1:8000"
+DEFAULT_INFERENCE_CONDA_ENV = "HyperSIGMA"
 
 
 def to_public_url(path: Path) -> str:
@@ -31,6 +33,22 @@ def _resolve_optional_path(p: str | None) -> str | None:
     return str(path)
 
 
+def _load_json_if_exists(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _build_python_command() -> list[str]:
+    conda_env = os.environ.get("HSI_INFERENCE_CONDA_ENV", DEFAULT_INFERENCE_CONDA_ENV).strip()
+    if conda_env:
+        return ["conda", "run", "-n", conda_env, "python"]
+    return ["python"]
+
+
 def run_inference_pipeline(
     *,
     input_path: str,
@@ -40,6 +58,12 @@ def run_inference_pipeline(
     model_checkpoint: str | None,
     spat_checkpoint: str | None,
     spec_checkpoint: str | None,
+    temperature: float | None = None,
+    temperature_json: str | None = None,
+    decision_threshold: float | None = None,
+    manifest_path: str | None = None,
+    patch_dataset_path: str | None = None,
+    split_policy: str | None = None,
     model_type: str,
     patch_size: int,
     stride: int,
@@ -58,9 +82,12 @@ def run_inference_pipeline(
     resolved_model_checkpoint = _resolve_optional_path(model_checkpoint)
     resolved_spat_checkpoint = _resolve_optional_path(spat_checkpoint)
     resolved_spec_checkpoint = _resolve_optional_path(spec_checkpoint)
+    resolved_temperature_json = _resolve_optional_path(temperature_json)
+    resolved_manifest_path = _resolve_optional_path(manifest_path)
+    resolved_patch_dataset_path = _resolve_optional_path(patch_dataset_path)
 
     cmd = [
-        "python",
+        *_build_python_command(),
         "-m",
         "hsi_water_detection_app.cli",
         "--input", input_path,
@@ -78,6 +105,18 @@ def run_inference_pipeline(
         cmd += ["--spat_checkpoint", resolved_spat_checkpoint]
     if resolved_spec_checkpoint:
         cmd += ["--spec_checkpoint", resolved_spec_checkpoint]
+    if temperature is not None:
+        cmd += ["--temperature", str(temperature)]
+    if resolved_temperature_json:
+        cmd += ["--temperature_json", resolved_temperature_json]
+    if decision_threshold is not None:
+        cmd += ["--decision_threshold", str(decision_threshold)]
+    if resolved_manifest_path:
+        cmd += ["--manifest_path", resolved_manifest_path]
+    if resolved_patch_dataset_path:
+        cmd += ["--patch_dataset_path", resolved_patch_dataset_path]
+    if split_policy:
+        cmd += ["--split_policy", str(split_policy)]
 
     if header_path:
         cmd += ["--header", header_path]
@@ -173,9 +212,23 @@ def run_inference_pipeline(
         "resolved_model_checkpoint": resolved_model_checkpoint,
         "resolved_spat_checkpoint": resolved_spat_checkpoint,
         "resolved_spec_checkpoint": resolved_spec_checkpoint,
+        "resolved_temperature_json": resolved_temperature_json,
         "model_type": model_type,
         "files": {k: str(v) for k, v in files.items()},
         "urls": {k: to_public_url(v) for k, v in files.items() if v.exists()},
+    }
+
+    cli_run_config = _load_json_if_exists(output_dir / "run_config.json")
+    result["model_provenance"] = {
+        "manifest_path": cli_run_config.get("manifest_path", resolved_manifest_path),
+        "patch_dataset_path": cli_run_config.get("patch_dataset_path", resolved_patch_dataset_path),
+        "model_checkpoint_path": cli_run_config.get("model_checkpoint", resolved_model_checkpoint),
+        "spat_checkpoint_path": cli_run_config.get("spat_checkpoint", resolved_spat_checkpoint),
+        "spec_checkpoint_path": cli_run_config.get("spec_checkpoint", resolved_spec_checkpoint),
+        "calibration_file_path": cli_run_config.get("resolved_temperature_json", resolved_temperature_json),
+        "temperature": cli_run_config.get("resolved_temperature", temperature),
+        "threshold": cli_run_config.get("decision_threshold", decision_threshold),
+        "split_policy": cli_run_config.get("split_policy", split_policy),
     }
 
     (output_dir / "api_result.json").write_text(

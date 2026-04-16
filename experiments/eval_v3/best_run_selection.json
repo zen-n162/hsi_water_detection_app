@@ -1,0 +1,28 @@
+{
+  "dataset": {
+    "manifest_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/annotations/manifests/wetness_manifest_from_confidence_ali_blocksplit.csv",
+    "patch_dataset_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/datasets/processed/wetness_pretrain_v3",
+    "split_policy": "spatial_block(block_size=224)"
+  },
+  "best_hypersigma_run": {
+    "run_name": "E02_head_only_posw_v3_block224_calibrated",
+    "comparison_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/eval_v3/model_comparison_E02_head_only_posw_v3_block224_calibrated_vs_baseline.json",
+    "checkpoint_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/model_best.pt",
+    "temperature_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/temperature_scaling_val.json",
+    "threshold_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/best_val_threshold_calibrated.json",
+    "test_metrics_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/test_metrics_tuned_calibrated.json"
+  },
+  "overall_gui_recommendation": {
+    "recommended_model": "hypersigma_calibrated_v3_block224",
+    "reason": "Tuned test F1 ties baseline while preserving higher PR-AUC than baseline and integrates directly with the existing HyperSIGMA GUI path. Temperature scaling materially improves Brier score and ECE versus uncalibrated HyperSIGMA.",
+    "tradeoff_note": "Baseline still has slightly higher ROC-AUC and lower Brier/ECE on tuned test, so it remains the safer non-attention reference model.",
+    "provenance": {
+      "manifest_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/annotations/manifests/wetness_manifest_from_confidence_ali_blocksplit.csv",
+      "patch_dataset_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/datasets/processed/wetness_pretrain_v3",
+      "model_checkpoint_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/model_best.pt",
+      "calibration_file_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/temperature_scaling_val.json",
+      "threshold": 0.327428693347738,
+      "split_policy": "spatial_block(block_size=224)"
+    }
+  }
+}

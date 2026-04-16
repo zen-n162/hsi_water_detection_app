@@ -3,21 +3,18 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from typing import List, Optional
+from typing import Any
 
 import numpy as np
 import torch
 from torch import nn
-from sklearn.metrics import (
-    average_precision_score,
-    confusion_matrix,
-    f1_score,
-    precision_score,
-    recall_score,
-    roc_auc_score,
-)
 
+from research.evaluation.metric_utils import compute_binary_metrics
 from research.training.dataloaders import WetnessPatchDataset
+
+
+DEFAULT_INPUT_DIR = Path("datasets/processed/wetness_pretrain_v2")
+DEFAULT_MANIFEST_PATH = Path("annotations/manifests/wetness_manifest_from_confidence_ali.csv")
 
 
 class BaselineNet(nn.Module):
@@ -35,37 +32,36 @@ class BaselineNet(nn.Module):
         return self.head(feat).squeeze(1)
 
 
-def _label_to_int(label) -> int:
-    if isinstance(label, bytes):
-        label = label.decode("utf-8")
-    if isinstance(label, np.ndarray):
-        label = label.item()
-    if isinstance(label, torch.Tensor):
-        label = label.item()
-    if isinstance(label, str):
-        label = label.strip().lower()
-        if label == "wet":
-            return 1
-        if label == "dry":
-            return 0
-    return int(float(label) >= 0.5)
+def _split_counts(dataset: WetnessPatchDataset) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for record in dataset.records:
+        split = str(record["split"])
+        counts[split] = counts.get(split, 0) + 1
+    return counts
 
 
-def _resolve_split(npz_path: Path) -> Optional[str]:
-    json_path = npz_path.with_suffix(".json")
-    if not json_path.exists():
-        return None
-    try:
-        meta = json.loads(json_path.read_text(encoding="utf-8"))
-    except Exception:
-        return None
-    split = meta.get("split")
-    return None if split is None else str(split)
+def _label_counts(dataset: WetnessPatchDataset) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for record in dataset.records:
+        label_name = str(record["label_raw"])
+        counts[label_name] = counts.get(label_name, 0) + 1
+    return counts
+
+
+def _json_ready(value: Any) -> Any:
+    if isinstance(value, Path):
+        return str(value)
+    if isinstance(value, dict):
+        return {str(k): _json_ready(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_json_ready(v) for v in value]
+    return value
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--input_dir", required=True)
+    ap = argparse.ArgumentParser(description="Evaluate the baseline wetness detector on the v2 dataset")
+    ap.add_argument("--input_dir", type=Path, default=DEFAULT_INPUT_DIR)
+    ap.add_argument("--manifest_path", type=Path, default=DEFAULT_MANIFEST_PATH)
     ap.add_argument("--checkpoint", required=True)
     ap.add_argument("--device", default="cpu")
     ap.add_argument("--split", default="test", choices=["train", "val", "test", "all"])
@@ -73,26 +69,15 @@ def main() -> None:
     ap.add_argument("--output_json", required=True)
     args = ap.parse_args()
 
-    ds = WetnessPatchDataset(args.input_dir, expected_hw=(64, 64))
+    full_ds = WetnessPatchDataset(args.input_dir, split=None, expected_hw=(64, 64), allow_uncertain=False)
+    target_split = None if args.split == "all" else args.split
+    ds = WetnessPatchDataset(args.input_dir, split=target_split, expected_hw=(64, 64), allow_uncertain=False)
+
     if len(ds) == 0:
-        raise RuntimeError(f"No dataset patches found in {args.input_dir}")
+        raise RuntimeError(f"No dataset patches found for split={args.split} in {args.input_dir}")
 
-    selected_files: List[Path] = []
-    split_counts = {}
-
-    for p in ds.files:
-        split = _resolve_split(p)
-        split_counts[split] = split_counts.get(split, 0) + 1
-        if args.split == "all" or split == args.split:
-            selected_files.append(p)
-
-    print("[INFO] discovered split counts:", split_counts)
-
-    if not selected_files:
-        raise RuntimeError(f"No patches found for split={args.split}")
-
-    first = np.load(selected_files[0], allow_pickle=True)
-    in_channels = int(first["cube"].shape[0])
+    sample = ds[0]
+    in_channels = int(sample["cube"].shape[0])
 
     model = BaselineNet(in_channels=in_channels)
     ckpt = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
@@ -104,55 +89,84 @@ def main() -> None:
     model.to(args.device)
     model.eval()
 
-    y_true = []
-    y_score = []
-    sample_rows = []
+    y_true: list[int] = []
+    y_score: list[float] = []
+    y_logit: list[float] = []
+    sample_rows: list[dict[str, Any]] = []
 
     with torch.no_grad():
-        for path in selected_files:
-            d = np.load(path, allow_pickle=True)
-            cube = d["cube"].astype(np.float32)
-            label = _label_to_int(d["label"])
-
-            x = torch.from_numpy(cube).unsqueeze(0).to(args.device)
-            score = torch.sigmoid(model(x)).item()
+        for idx in range(len(ds)):
+            item = ds[idx]
+            label = int(float(item["label"].item()) >= 0.5)
+            cube = item["cube"].unsqueeze(0).to(args.device)
+            logit = float(model(cube).item())
+            score = float(torch.sigmoid(torch.tensor(logit)).item())
             pred = int(score >= args.threshold)
 
             y_true.append(label)
             y_score.append(score)
+            y_logit.append(logit)
             sample_rows.append(
                 {
-                    "file": path.name,
+                    "file": item["file"],
+                    "path": item["path"],
+                    "sample_id": item["sample_id"],
+                    "split": item["split"],
+                    "label_name": item["label_name"],
+                    "confidence": float(item["confidence"].item()),
+                    "confidence_tier": float(item["confidence_tier"]),
+                    "valid_ratio": float(item["valid_ratio"]),
+                    "wet_ratio_valid": float(item["wet_ratio_valid"]),
+                    "y_logit": float(logit),
                     "y_true": int(label),
                     "y_score": float(score),
                     "y_pred": int(pred),
                 }
             )
 
-    y_true = np.asarray(y_true, dtype=np.int64)
-    y_score = np.asarray(y_score, dtype=np.float64)
-    y_pred = (y_score >= args.threshold).astype(np.int64)
+    y_true_np = np.asarray(y_true, dtype=np.int64)
+    y_score_np = np.asarray(y_score, dtype=np.float64)
+    metrics_core = compute_binary_metrics(
+        y_true=y_true_np,
+        y_score=y_score_np,
+        threshold=args.threshold,
+    )
 
     metrics = {
         "model_name": "baseline",
         "split": args.split,
         "threshold": args.threshold,
-        "n_samples": int(len(y_true)),
-        "n_wet": int((y_true == 1).sum()),
-        "n_dry": int((y_true == 0).sum()),
-        "roc_auc": float(roc_auc_score(y_true, y_score)) if len(np.unique(y_true)) == 2 else None,
-        "pr_auc": float(average_precision_score(y_true, y_score)) if len(np.unique(y_true)) == 2 else None,
-        "precision": float(precision_score(y_true, y_pred, zero_division=0)),
-        "recall": float(recall_score(y_true, y_pred, zero_division=0)),
-        "f1": float(f1_score(y_true, y_pred, zero_division=0)),
-        "confusion_matrix": confusion_matrix(y_true, y_pred, labels=[0, 1]).tolist(),
+        "n_samples": int(len(y_true_np)),
+        "n_wet": int((y_true_np == 1).sum()),
+        "n_dry": int((y_true_np == 0).sum()),
+        "roc_auc": metrics_core["roc_auc"],
+        "pr_auc": metrics_core["pr_auc"],
+        "precision": metrics_core["precision"],
+        "recall": metrics_core["recall"],
+        "f1": metrics_core["f1"],
+        "confusion_matrix": metrics_core["confusion_matrix"],
         "confusion_matrix_labels": ["dry(0)", "wet(1)"],
+        "brier_score": metrics_core["brier_score"],
+        "ece": metrics_core["ece"],
+        "dataset_info": {
+            "manifest_path": str(args.manifest_path.resolve()) if args.manifest_path.exists() else str(args.manifest_path),
+            "input_dir": str(args.input_dir.resolve()) if args.input_dir.exists() else str(args.input_dir),
+            "requested_split": args.split,
+            "discovered_split_counts": _split_counts(full_ds),
+            "selected_label_counts": _label_counts(ds),
+        },
+        "model_info": {
+            "checkpoint": str(Path(args.checkpoint).resolve()),
+            "device": args.device,
+            "in_channels": in_channels,
+        },
+        "score_distribution": metrics_core["score_distribution"],
         "samples": sample_rows,
     }
 
     out_path = Path(args.output_json)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(metrics, ensure_ascii=False, indent=2), encoding="utf-8")
+    out_path.write_text(json.dumps(_json_ready(metrics), ensure_ascii=False, indent=2), encoding="utf-8")
 
     print(f"[INFO] split={metrics['split']}")
     print(f"[INFO] n_samples={metrics['n_samples']} wet={metrics['n_wet']} dry={metrics['n_dry']}")
@@ -161,8 +175,7 @@ def main() -> None:
     print(f"[INFO] Precision@{args.threshold:.2f}={metrics['precision']}")
     print(f"[INFO] Recall@{args.threshold:.2f}={metrics['recall']}")
     print(f"[INFO] F1@{args.threshold:.2f}={metrics['f1']}")
-    print("[INFO] Confusion Matrix [[TN, FP], [FN, TP]] =")
-    print(np.array(metrics["confusion_matrix"]))
+    print(f"[INFO] score range=({metrics['score_distribution']['min']:.6f}, {metrics['score_distribution']['max']:.6f})")
     print(f"[INFO] metrics saved to {out_path}")
 
 

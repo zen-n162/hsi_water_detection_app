@@ -1,0 +1,190 @@
+{
+  "v2_touching_pair_counts": {
+    "test::train": {
+      "min_row_gap": 0,
+      "min_col_gap": 0,
+      "min_euclidean_gap": 0.0,
+      "touching_or_overlapping_pairs": 50,
+      "closest_examples": [
+        {
+          "left_sample_id": "confali_00001",
+          "left_split": "train",
+          "right_sample_id": "confali_00004",
+          "right_split": "test",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        },
+        {
+          "left_sample_id": "confali_00003",
+          "left_split": "train",
+          "right_sample_id": "confali_00004",
+          "right_split": "test",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        },
+        {
+          "left_sample_id": "confali_00004",
+          "left_split": "test",
+          "right_sample_id": "confali_00007",
+          "right_split": "train",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        },
+        {
+          "left_sample_id": "confali_00004",
+          "left_split": "test",
+          "right_sample_id": "confali_00008",
+          "right_split": "train",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        },
+        {
+          "left_sample_id": "confali_00006",
+          "left_split": "train",
+          "right_sample_id": "confali_00010",
+          "right_split": "test",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        }
+      ]
+    },
+    "train::val": {
+      "min_row_gap": 0,
+      "min_col_gap": 0,
+      "min_euclidean_gap": 0.0,
+      "touching_or_overlapping_pairs": 43,
+      "closest_examples": [
+        {
+          "left_sample_id": "confali_00002",
+          "left_split": "train",
+          "right_sample_id": "confali_00005",
+          "right_split": "val",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        },
+        {
+          "left_sample_id": "confali_00005",
+          "left_split": "val",
+          "right_sample_id": "confali_00006",
+          "right_split": "train",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        },
+        {
+          "left_sample_id": "confali_00005",
+          "left_split": "val",
+          "right_sample_id": "confali_00011",
+          "right_split": "train",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        },
+        {
+          "left_sample_id": "confali_00009",
+          "left_split": "val",
+          "right_sample_id": "confali_00013",
+          "right_split": "train",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        },
+        {
+          "left_sample_id": "confali_00011",
+          "left_split": "train",
+          "right_sample_id": "confali_00015",
+          "right_split": "val",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        }
+      ]
+    },
+    "test::val": {
+      "min_row_gap": 0,
+      "min_col_gap": 0,
+      "min_euclidean_gap": 0.0,
+      "touching_or_overlapping_pairs": 11,
+      "closest_examples": [
+        {
+          "left_sample_id": "confali_00005",
+          "left_split": "val",
+          "right_sample_id": "confali_00010",
+          "right_split": "test",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        },
+        {
+          "left_sample_id": "confali_00009",
+          "left_split": "val",
+          "right_sample_id": "confali_00010",
+          "right_split": "test",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        },
+        {
+          "left_sample_id": "confali_00009",
+          "left_split": "val",
+          "right_sample_id": "confali_00014",
+          "right_split": "test",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        },
+        {
+          "left_sample_id": "confali_00010",
+          "left_split": "test",
+          "right_sample_id": "confali_00015",
+          "right_split": "val",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        },
+        {
+          "left_sample_id": "confali_00014",
+          "left_split": "test",
+          "right_sample_id": "confali_00015",
+          "right_split": "val",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        }
+      ]
+    }
+  },
+  "v3_touching_pair_counts": {
+    "test::train": 12,
+    "train::val": 26,
+    "test::val": 1
+  },
+  "v3_vs_v2_delta": {
+    "pairs": [
+      {
+        "pair": "test::train",
+        "current_touching_pairs": 12,
+        "previous_touching_pairs": 50,
+        "delta_touching_pairs": -38
+      },
+      {
+        "pair": "test::val",
+        "current_touching_pairs": 1,
+        "previous_touching_pairs": 11,
+        "delta_touching_pairs": -10
+      },
+      {
+        "pair": "train::val",
+        "current_touching_pairs": 26,
+        "previous_touching_pairs": 43,
+        "delta_touching_pairs": -17
+      }
+    ]
+  }
+}

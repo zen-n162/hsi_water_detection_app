@@ -1,0 +1,32 @@
+{
+  "label_raster": "/home/zennakamura/MasterResearch/HyperSIGMA/HyperspectralDetection/Hyperion_WaterLabel_20111222/data/processed/labels/confidence_ali.tif",
+  "input_raster": "/home/zennakamura/MasterResearch/HyperSIGMA/HyperspectralDetection/Hyperion_WaterLabel_20111222/data/processed/hyperion/hyperion_stack_crop_f16.tif",
+  "patch_size": 64,
+  "stride": 64,
+  "min_valid_ratio": 0.9,
+  "min_wet_ratio": 0.1,
+  "split_seed": 42,
+  "n_records": 89,
+  "split_counts": {
+    "train": 61,
+    "test": 14,
+    "val": 14
+  },
+  "label_counts": {
+    "dry": 64,
+    "wet": 25
+  },
+  "confidence_tier_counts": {
+    "0": 64,
+    "3": 18,
+    "1": 7
+  },
+  "split_label_counts": {
+    "train::dry": 44,
+    "train::wet": 17,
+    "test::dry": 10,
+    "val::dry": 10,
+    "test::wet": 4,
+    "val::wet": 4
+  }
+}

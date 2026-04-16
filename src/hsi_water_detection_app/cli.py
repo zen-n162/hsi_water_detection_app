@@ -2,6 +2,7 @@ import argparse
 import json
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from hsi_water_detection_app.config import (
     DEFAULT_PATCH_SIZE,
@@ -28,6 +29,28 @@ from hsi_water_detection_app.visualization.spatial import (
 from hsi_water_detection_app.visualization.spectral import save_spectral_outputs
 
 
+def _safe_float(value: Any, default: float | None = None) -> float | None:
+    if value is None:
+        return default
+    try:
+        return float(value)
+    except Exception:
+        return default
+
+
+def _resolve_temperature(
+    temperature: float | None,
+    temperature_json: str | None,
+) -> tuple[float, str | None]:
+    if temperature_json:
+        obj = json.loads(Path(temperature_json).read_text(encoding="utf-8"))
+        value = _safe_float(obj.get("best_temperature", obj.get("temperature")), default=1.0)
+        return float(value if value is not None else 1.0), str(Path(temperature_json).resolve())
+    if temperature is not None:
+        return float(temperature), None
+    return 1.0, None
+
+
 def build_parser():
     parser = argparse.ArgumentParser(
         prog="hsi-water-detect",
@@ -39,6 +62,12 @@ def build_parser():
 
     # backward compatible
     parser.add_argument("--model_checkpoint", type=str, default=None, help="Legacy single checkpoint path")
+    parser.add_argument("--temperature", type=float, default=None, help="Optional temperature scaling value")
+    parser.add_argument("--temperature_json", type=str, default=None, help="Optional temperature scaling json path")
+    parser.add_argument("--decision_threshold", type=float, default=None, help="Optional decision threshold kept in provenance")
+    parser.add_argument("--manifest_path", type=str, default=None, help="Optional training/eval manifest provenance path")
+    parser.add_argument("--patch_dataset_path", type=str, default=None, help="Optional patch dataset provenance path")
+    parser.add_argument("--split_policy", type=str, default=None, help="Optional split policy provenance label")
 
     # new dual-checkpoint mode
     parser.add_argument("--spat_checkpoint", type=str, default=None, help="Path to spatial encoder checkpoint")
@@ -124,6 +153,10 @@ def build_output_dir(args, sensor: str) -> Path:
 def main():
     parser = build_parser()
     args = parser.parse_args()
+    resolved_temperature, resolved_temperature_json = _resolve_temperature(
+        args.temperature,
+        args.temperature_json,
+    )
 
     sensor = infer_sensor(args.sensor, args.input)
     output_dir = build_output_dir(args, sensor)
@@ -187,19 +220,22 @@ def main():
 
     if sensor == "hyperion":
         before_bands = None if cube is None else cube.shape[0]
-        cube = remove_bad_bands(cube, bad_band_indices=HYPERION_BAD_BANDS_0BASED)
+        if before_bands == 242:
+            cube = remove_bad_bands(cube, bad_band_indices=HYPERION_BAD_BANDS_0BASED)
 
-        if wavelengths is not None and before_bands is not None:
-            if len(wavelengths) == before_bands:
-                bad_set = set(HYPERION_BAD_BANDS_0BASED)
-                keep_indices = [i for i in range(before_bands) if i not in bad_set]
-                wavelengths = wavelengths[keep_indices]
-                print(f"[INFO] wavelength vector adjusted with bad-band removal: {before_bands} -> {len(wavelengths)}")
-            else:
-                print(
-                    f"[WARN] wavelength length ({len(wavelengths)}) does not match "
-                    f"pre-removal band count ({before_bands}); keeping wavelength vector unchanged"
-                )
+            if wavelengths is not None and before_bands is not None:
+                if len(wavelengths) == before_bands:
+                    bad_set = set(HYPERION_BAD_BANDS_0BASED)
+                    keep_indices = [i for i in range(before_bands) if i not in bad_set]
+                    wavelengths = wavelengths[keep_indices]
+                    print(f"[INFO] wavelength vector adjusted with bad-band removal: {before_bands} -> {len(wavelengths)}")
+                else:
+                    print(
+                        f"[WARN] wavelength length ({len(wavelengths)}) does not match "
+                        f"pre-removal band count ({before_bands}); keeping wavelength vector unchanged"
+                    )
+        else:
+            print(f"[INFO] skip Hyperion bad-band removal because bands={before_bands}")
 
     cube = normalize_cube(cube)
 
@@ -219,7 +255,12 @@ def main():
         first_spectral_attention = None
     else:
         patches = generate_patches(cube, patch_size=args.patch_size, stride=args.stride)
-        patch_outputs = infer_patches(model, patches, device=args.device)
+        patch_outputs = infer_patches(
+            model,
+            patches,
+            device=args.device,
+            temperature=resolved_temperature,
+        )
         image_shape = (cube.shape[1], cube.shape[2])
         first_spectral_attention = (
             patch_outputs[0]["spectral_attn"] if patch_outputs else None
@@ -279,11 +320,20 @@ def main():
         "model_checkpoint": args.model_checkpoint,
         "spat_checkpoint": args.spat_checkpoint,
         "spec_checkpoint": args.spec_checkpoint,
+        "temperature": args.temperature,
+        "temperature_json": args.temperature_json,
+        "resolved_temperature": resolved_temperature,
+        "resolved_temperature_json": resolved_temperature_json,
+        "decision_threshold": args.decision_threshold,
+        "manifest_path": args.manifest_path,
+        "patch_dataset_path": args.patch_dataset_path,
+        "split_policy": args.split_policy,
         "patch_size": args.patch_size,
         "stride": args.stride,
         "device": args.device,
         "sensor": sensor,
         "model_type": args.model_type,
+        "model_load_info": getattr(model, "load_info", {}),
         "row_start": args.row_start,
         "row_stop": args.row_stop,
         "col_start": args.col_start,
@@ -302,6 +352,7 @@ def main():
     print("Pipeline skeleton is connected.")
     print("args:", args)
     print("sensor:", sensor)
+    print("resolved_temperature:", resolved_temperature)
     print("output_dir:", output_dir)
     print("cube:", "None" if cube is None else cube.shape)
     print("prob_map:", "None" if prob_map is None else prob_map.shape)

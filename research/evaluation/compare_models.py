@@ -34,6 +34,8 @@ def main() -> None:
         "precision",
         "recall",
         "f1",
+        "brier_score",
+        "ece",
         "confusion_matrix",
     ]
 
@@ -41,6 +43,7 @@ def main() -> None:
     for obj, name in [(baseline, "baseline"), (hypersigma, "hypersigma")]:
         row = {k: obj.get(k) for k in keys}
         row["model_name"] = name
+        row["calibration_mode"] = obj.get("calibration_info", {}).get("mode")
         rows.append(row)
 
     summary = {
@@ -57,7 +60,7 @@ def main() -> None:
     out_json.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
 
     with out_csv.open("w", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=keys)
+        writer = csv.DictWriter(f, fieldnames=keys + ["calibration_mode"])
         writer.writeheader()
         writer.writerows(rows)
 

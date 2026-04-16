@@ -1,0 +1,27 @@
+{
+  "args": {
+    "input_dir": "datasets/processed/wetness_pretrain_v3",
+    "manifest_path": "annotations/manifests/wetness_manifest_from_confidence_ali_blocksplit.csv",
+    "run_name": "baseline_v3_block224",
+    "save_dir": "experiments/runs_v3",
+    "train_split": "train",
+    "epochs": 20,
+    "batch_size": 8,
+    "lr": 0.001,
+    "seed": 42,
+    "device": "cpu"
+  },
+  "device": "cpu",
+  "dataset_info": {
+    "manifest_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/annotations/manifests/wetness_manifest_from_confidence_ali_blocksplit.csv",
+    "input_dir": "/home/zennakamura/MasterResearch/hsi_water_detection_app/datasets/processed/wetness_pretrain_v3",
+    "train_split": "train",
+    "n_train_samples": 62,
+    "train_label_counts": {
+      "dry": 45,
+      "wet": 17
+    }
+  },
+  "best_checkpoint": "experiments/runs_v3/baseline_v3_block224/model_best.pt",
+  "last_checkpoint": "experiments/runs_v3/baseline_v3_block224/model_last.pt"
+}

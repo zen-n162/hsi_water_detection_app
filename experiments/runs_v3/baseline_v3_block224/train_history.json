@@ -1,0 +1,99 @@
+{
+  "run_name": "baseline_v3_block224",
+  "device": "cpu",
+  "dataset_info": {
+    "manifest_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/annotations/manifests/wetness_manifest_from_confidence_ali_blocksplit.csv",
+    "input_dir": "/home/zennakamura/MasterResearch/hsi_water_detection_app/datasets/processed/wetness_pretrain_v3",
+    "train_split": "train",
+    "n_train_samples": 62,
+    "train_label_counts": {
+      "dry": 45,
+      "wet": 17
+    }
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.5200897194445133
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.46830878034234047
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.46082882955670357
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.44540177285671234
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.42777635157108307
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.4236848056316376
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.4276016652584076
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.41265370696783066
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.41078421473503113
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.4074595123529434
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.39555344358086586
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.39307285100221634
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.39391916804015636
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.37388914078474045
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.3768088426440954
+    },
+    {
+      "epoch": 16,
+      "train_loss": 0.3645043149590492
+    },
+    {
+      "epoch": 17,
+      "train_loss": 0.37386952340602875
+    },
+    {
+      "epoch": 18,
+      "train_loss": 0.35895087756216526
+    },
+    {
+      "epoch": 19,
+      "train_loss": 0.3488064743578434
+    },
+    {
+      "epoch": 20,
+      "train_loss": 0.35083323530852795
+    }
+  ],
+  "best_train_loss": 0.3488064743578434,
+  "best_checkpoint": "experiments/runs_v3/baseline_v3_block224/model_best.pt",
+  "last_checkpoint": "experiments/runs_v3/baseline_v3_block224/model_last.pt"
+}

@@ -61,6 +61,7 @@ def infer_patches(
     patches: List[PatchInfo],
     device: str = "cpu",
     target_signature: Optional[np.ndarray] = None,
+    temperature: float = 1.0,
 ) -> List[PatchPrediction]:
     """
     Real patch inference path when model provides .infer_patch(...).
@@ -115,6 +116,7 @@ def infer_patches(
             patch,
             target_signature=target_signature,
             return_attn=True,
+            temperature=temperature,
         )
 
         outputs.append(

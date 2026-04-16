@@ -11,7 +11,6 @@ from hsi_water_detection_app.config import HYPERION_BAD_BANDS_0BASED
 from hsi_water_detection_app.data.loader import load_hsi_window
 from hsi_water_detection_app.data.preprocessing import normalize_cube
 
-
 EXPECTED_PATCH_H = 64
 EXPECTED_PATCH_W = 64
 
@@ -36,24 +35,25 @@ def apply_sensor_band_policy(cube: np.ndarray, sensor: str) -> np.ndarray:
     return cube
 
 
-def has_todo_placeholder(row: dict[str, str]) -> bool:
-    for k in ["row_start", "row_stop", "col_start", "col_stop"]:
-        if "TODO_" in str(row.get(k, "")):
-            return True
-    return False
+def is_placeholder_row(row: dict) -> bool:
+    fields = [
+        row.get("row_start"),
+        row.get("row_stop"),
+        row.get("col_start"),
+        row.get("col_stop"),
+    ]
+    return any("TODO" in str(x) for x in fields)
 
 
-def parse_int_field(row: dict[str, str], key: str) -> int:
-    return int(str(row[key]).strip())
-
-
-def export_one(row: dict[str, str], output_dir: Path) -> Path:
+def export_one(row: dict, output_dir: str | Path) -> None:
+    sample_id = row["sample_id"]
     input_path = row["input_path"]
-    row_start = parse_int_field(row, "row_start")
-    row_stop = parse_int_field(row, "row_stop")
-    col_start = parse_int_field(row, "col_start")
-    col_stop = parse_int_field(row, "col_stop")
     sensor = row.get("sensor", "hyperion")
+
+    row_start = int(row["row_start"])
+    row_stop = int(row["row_stop"])
+    col_start = int(row["col_start"])
+    col_stop = int(row["col_stop"])
 
     cube, meta = load_hsi_window(
         input_path,
@@ -63,91 +63,96 @@ def export_one(row: dict[str, str], output_dir: Path) -> Path:
         col_stop=col_stop,
     )
 
-    if cube is None:
-        raise RuntimeError(f"failed to load cube from {input_path}")
+    if cube.ndim != 3:
+        raise ValueError(f"cube must be 3D, got shape={cube.shape}")
 
     if cube.shape[1] != EXPECTED_PATCH_H or cube.shape[2] != EXPECTED_PATCH_W:
         raise ValueError(
-            f"patch shape mismatch: got {cube.shape}, expected bands x {EXPECTED_PATCH_H} x {EXPECTED_PATCH_W}"
+            f"patch shape mismatch: got {cube.shape}, "
+            f"expected bands x {EXPECTED_PATCH_H} x {EXPECTED_PATCH_W}"
         )
 
     cube = apply_sensor_band_policy(cube, sensor=sensor)
     cube = normalize_cube(cube)
 
-    sample_id = row["sample_id"]
-    out_npz = output_dir / f"{sample_id}.npz"
-    out_json = output_dir / f"{sample_id}.json"
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    npz_path = output_dir / f"{sample_id}.npz"
+    json_path = output_dir / f"{sample_id}.json"
+
+    label = row["label"]
+    confidence = float(row.get("confidence", 1.0))
+    split = row.get("split", "train")
 
     np.savez_compressed(
-        out_npz,
+        npz_path,
         cube=cube.astype(np.float32),
-        label=np.array(row["label"]),
-        confidence=np.float32(row["confidence"]),
+        label=np.array(label),
+        confidence=np.array(confidence, dtype=np.float32),
+        split=np.array(split),
+        sample_id=np.array(sample_id),
     )
 
-    out_json.write_text(
-        json.dumps(
-            {
-                "sample_id": sample_id,
-                "scene_id": row["scene_id"],
-                "input_path": input_path,
-                "sensor": sensor,
-                "roi": {
-                    "row_start": row_start,
-                    "row_stop": row_stop,
-                    "col_start": col_start,
-                    "col_stop": col_stop,
-                },
-                "label": row["label"],
-                "confidence": float(row["confidence"]),
-                "meta": meta,
-            },
-            indent=2,
-            ensure_ascii=False,
-            default=str,
-        ),
+    # Preserve any extra manifest fields in the sidecar json so downstream
+    # dataset/eval code can access regenerated metadata without depending on
+    # the original CSV at runtime.
+    meta_out = dict(row)
+    meta_out.update(
+        {
+            "sample_id": sample_id,
+            "scene_id": row.get("scene_id"),
+            "input_path": input_path,
+            "sensor": sensor,
+            "row_start": row_start,
+            "row_stop": row_stop,
+            "col_start": col_start,
+            "col_stop": col_stop,
+            "label": label,
+            "confidence": confidence,
+            "split": split,
+            "source": row.get("source"),
+            "notes": row.get("notes"),
+            "cube_shape": list(cube.shape),
+        }
+    )
+    json_path.write_text(
+        json.dumps(meta_out, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
 
-    print(f"[INFO] exported sample: {sample_id} -> {out_npz}")
-    return out_npz
+    print(f"[INFO] exported sample: {sample_id} -> {npz_path}")
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Export ROI patches from wetness manifest")
-    parser.add_argument(
-        "--manifest",
-        type=Path,
-        default=Path("annotations/manifests/wetness_manifest.csv"),
-    )
-    parser.add_argument(
-        "--output_dir",
-        type=Path,
-        default=Path("datasets/processed/wetness_pretrain"),
-    )
-    args = parser.parse_args()
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--manifest", required=True)
+    ap.add_argument("--output_dir", required=True)
+    args = ap.parse_args()
 
-    args.output_dir.mkdir(parents=True, exist_ok=True)
+    manifest_path = Path(args.manifest)
+    if not manifest_path.exists():
+        raise FileNotFoundError(f"manifest not found: {manifest_path}")
 
     exported = 0
     skipped = 0
 
-    with args.manifest.open("r", newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            sample_id = row.get("sample_id", "(unknown)")
+    with manifest_path.open("r", encoding="utf-8", newline="") as f:
+        rows = list(csv.DictReader(f))
 
-            if has_todo_placeholder(row):
+    for row in rows:
+        sample_id = row.get("sample_id", "<unknown>")
+        try:
+            if is_placeholder_row(row):
                 print(f"[WARN] skipped placeholder row: {sample_id}")
                 skipped += 1
                 continue
 
-            try:
-                export_one(row, args.output_dir)
-                exported += 1
-            except Exception as e:
-                print(f"[WARN] skipped invalid row: {sample_id} ({e!r})")
-                skipped += 1
+            export_one(row, args.output_dir)
+            exported += 1
+        except Exception as e:
+            print(f"[WARN] skipped invalid row: {sample_id} ({e!r})")
+            skipped += 1
 
     print(f"[INFO] exported {exported} ROI patches to {args.output_dir}")
     print(f"[INFO] skipped {skipped} rows")

@@ -17,6 +17,12 @@ async def run_inference(
 
     # legacy
     model_checkpoint: str | None = Form(default=None),
+    temperature: float | None = Form(default=None),
+    temperature_json: str | None = Form(default=None),
+    decision_threshold: float | None = Form(default=None),
+    manifest_path: str | None = Form(default=None),
+    patch_dataset_path: str | None = Form(default=None),
+    split_policy: str | None = Form(default=None),
 
     # new dual-checkpoint inputs
     spat_checkpoint: str | None = Form(default=None),
@@ -55,6 +61,12 @@ async def run_inference(
             model_checkpoint=model_checkpoint,
             spat_checkpoint=spat_checkpoint,
             spec_checkpoint=spec_checkpoint,
+            temperature=temperature,
+            temperature_json=temperature_json,
+            decision_threshold=decision_threshold,
+            manifest_path=manifest_path,
+            patch_dataset_path=patch_dataset_path,
+            split_policy=split_policy,
             model_type=model_type,
             patch_size=patch_size,
             stride=stride,

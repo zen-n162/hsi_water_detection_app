@@ -39,6 +39,20 @@ export default function App() {
   const [sensor, setSensor] = useState("hyperion");
   const [device, setDevice] = useState("cuda");
   const [modelType, setModelType] = useState("ss");
+  const [modelCheckpoint, setModelCheckpoint] = useState(
+    "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/model_best.pt"
+  );
+  const [temperatureJson, setTemperatureJson] = useState(
+    "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/temperature_scaling_val.json"
+  );
+  const [decisionThreshold, setDecisionThreshold] = useState("0.327428693347738");
+  const [manifestPath, setManifestPath] = useState(
+    "/home/zennakamura/MasterResearch/hsi_water_detection_app/annotations/manifests/wetness_manifest_from_confidence_ali_blocksplit.csv"
+  );
+  const [patchDatasetPath, setPatchDatasetPath] = useState(
+    "/home/zennakamura/MasterResearch/hsi_water_detection_app/datasets/processed/wetness_pretrain_v3"
+  );
+  const [splitPolicy, setSplitPolicy] = useState("spatial_block(block_size=224)");
 
   const [spatCheckpoint, setSpatCheckpoint] = useState(
     "/home/zennakamura/MasterResearch/HyperSIGMA/HyperspectralDetection/spat-vit-b-checkpoint-1599.pth"
@@ -108,6 +122,12 @@ export default function App() {
     formData.append("sensor", sensor);
     formData.append("device", device);
     formData.append("model_type", modelType);
+    if (modelCheckpoint.trim() !== "") formData.append("model_checkpoint", modelCheckpoint.trim());
+    if (temperatureJson.trim() !== "") formData.append("temperature_json", temperatureJson.trim());
+    if (decisionThreshold.trim() !== "") formData.append("decision_threshold", decisionThreshold.trim());
+    if (manifestPath.trim() !== "") formData.append("manifest_path", manifestPath.trim());
+    if (patchDatasetPath.trim() !== "") formData.append("patch_dataset_path", patchDatasetPath.trim());
+    if (splitPolicy.trim() !== "") formData.append("split_policy", splitPolicy.trim());
     formData.append("spat_checkpoint", spatCheckpoint);
     formData.append("spec_checkpoint", specCheckpoint);
 
@@ -173,6 +193,31 @@ export default function App() {
           </div>
 
           <div style={{ marginBottom: 12 }}>
+            <label>Fine-tuned model checkpoint:</label>
+            <input
+              value={modelCheckpoint}
+              onChange={(e) => setModelCheckpoint(e.target.value)}
+              placeholder="Optional. Leave blank to use backbone-only inference."
+              style={{ width: "100%" }}
+            />
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <label>Calibration JSON:</label>
+            <input
+              value={temperatureJson}
+              onChange={(e) => setTemperatureJson(e.target.value)}
+              placeholder="Optional temperature scaling json"
+              style={{ width: "100%" }}
+            />
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <label>Decision threshold:</label>
+            <input value={decisionThreshold} onChange={(e) => setDecisionThreshold(e.target.value)} style={{ width: "100%" }} />
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
             <label>Spatial checkpoint:</label>
             <input value={spatCheckpoint} onChange={(e) => setSpatCheckpoint(e.target.value)} style={{ width: "100%" }} />
           </div>
@@ -180,6 +225,21 @@ export default function App() {
           <div style={{ marginBottom: 12 }}>
             <label>Spectral checkpoint:</label>
             <input value={specCheckpoint} onChange={(e) => setSpecCheckpoint(e.target.value)} style={{ width: "100%" }} />
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <label>Manifest provenance:</label>
+            <input value={manifestPath} onChange={(e) => setManifestPath(e.target.value)} style={{ width: "100%" }} />
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <label>Patch dataset provenance:</label>
+            <input value={patchDatasetPath} onChange={(e) => setPatchDatasetPath(e.target.value)} style={{ width: "100%" }} />
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <label>Split policy provenance:</label>
+            <input value={splitPolicy} onChange={(e) => setSplitPolicy(e.target.value)} style={{ width: "100%" }} />
           </div>
 
           <div style={{ marginBottom: 12 }}>
@@ -241,6 +301,13 @@ export default function App() {
                 <summary>Additional files</summary>
                 <pre style={{ whiteSpace: "pre-wrap", background: "#f5f5f5", padding: 12, borderRadius: 8, maxHeight: 260, overflow: "auto", fontSize: "0.82rem" }}>
                   {JSON.stringify(result.urls, null, 2)}
+                </pre>
+              </details>
+
+              <details style={{ marginTop: 12 }}>
+                <summary>Model provenance</summary>
+                <pre style={{ whiteSpace: "pre-wrap", background: "#f5f5f5", padding: 12, borderRadius: 8, maxHeight: 260, overflow: "auto", fontSize: "0.82rem" }}>
+                  {JSON.stringify(result.model_provenance, null, 2)}
                 </pre>
               </details>
             </>

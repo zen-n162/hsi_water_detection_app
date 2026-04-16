@@ -187,6 +187,64 @@ def _smart_load_submodule(
     return info
 
 
+def _smart_load_full_model(
+    model: torch.nn.Module,
+    checkpoint_path: str | Path,
+    name: str = "fine_tuned_model",
+) -> Dict[str, Any]:
+    print(f"[INFO] loading {name} checkpoint: {checkpoint_path}")
+    ckpt_path = Path(checkpoint_path)
+    if not ckpt_path.exists():
+        raise FileNotFoundError(f"Checkpoint not found: {ckpt_path}")
+
+    obj = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+    dprint("Fine-tuned checkpoint object type:", type(obj))
+
+    if isinstance(obj, dict) and "model_state_dict" in obj and isinstance(obj["model_state_dict"], dict):
+        loaded_state = obj["model_state_dict"]
+        dprint("Using checkpoint['model_state_dict']")
+    elif isinstance(obj, dict) and "state_dict" in obj and isinstance(obj["state_dict"], dict):
+        loaded_state = obj["state_dict"]
+        dprint("Using checkpoint['state_dict']")
+    elif isinstance(obj, dict) and "model" in obj and isinstance(obj["model"], dict):
+        loaded_state = obj["model"]
+        dprint("Using checkpoint['model']")
+    elif isinstance(obj, dict) and all(isinstance(k, str) for k in obj.keys()):
+        loaded_state = obj
+        dprint("Using checkpoint as raw state_dict")
+    else:
+        raise ValueError(f"Unsupported fine-tuned checkpoint format: {ckpt_path}")
+
+    model_state = model.state_dict()
+    filtered, missing_after_filter, skipped_shape, skipped_unknown = _filter_state_dict_for_model(
+        model_state=model_state,
+        loaded_state=loaded_state,
+    )
+
+    msg = model.load_state_dict(filtered, strict=False)
+
+    info = {
+        "checkpoint_path": str(ckpt_path),
+        "loaded_keys": len(filtered),
+        "missing_keys_count": len(missing_after_filter),
+        "skipped_shape_count": len(skipped_shape),
+        "skipped_unknown_count": len(skipped_unknown),
+        "missing_keys_sample": missing_after_filter[:20],
+        "skipped_shape_sample": skipped_shape[:20],
+        "skipped_unknown_sample": skipped_unknown[:20],
+        "load_state_dict_msg": str(msg),
+    }
+
+    print(
+        f"[INFO] {name} checkpoint loaded. "
+        f"matched={info['loaded_keys']} "
+        f"missing={info['missing_keys_count']} "
+        f"shape_skipped={info['skipped_shape_count']} "
+        f"unknown_skipped={info['skipped_unknown_count']}"
+    )
+    return info
+
+
 def _normalize01(arr: np.ndarray) -> np.ndarray:
     arr = arr.astype(np.float32, copy=False)
     amin = np.nanmin(arr)
@@ -299,10 +357,13 @@ class HyperSigmaWrapper:
         patch_chw: np.ndarray,
         target_signature: Optional[np.ndarray | torch.Tensor] = None,
         return_attn: bool = True,
+        temperature: float = 1.0,
         **kwargs,
     ) -> Dict[str, np.ndarray]:
         if patch_chw.ndim != 3:
             raise ValueError(f"Expected patch shape (C,H,W), got {patch_chw.shape}")
+        if temperature <= 0:
+            raise ValueError(f"temperature must be positive, got {temperature}")
 
         _, h, w = patch_chw.shape
         dprint("infer_patch input patch shape:", patch_chw.shape)
@@ -332,47 +393,68 @@ class HyperSigmaWrapper:
                 dprint(f"Calling SS model forward(return_attn={return_attn})")
                 out = self.model(x, ts, return_attn=return_attn)
 
-                if not isinstance(out, (tuple, list)):
-                    raise RuntimeError("SS model output is not tuple/list")
+                if isinstance(out, (tuple, list)):
+                    for i, item in enumerate(out):
+                        dprint(f"SS output[{i}] ->", _shape_of(item))
+                    if len(out) == 0:
+                        raise RuntimeError("SS model returned empty tuple/list")
+                    pred = out[0]
+                    spat_attn = out[1] if len(out) > 1 else None
+                    spec_attn = out[2] if len(out) > 2 else None
+                else:
+                    dprint("SS output ->", _shape_of(out))
+                    pred = out
+                    spat_attn = None
+                    spec_attn = None
 
-                for i, item in enumerate(out):
-                    dprint(f"SS output[{i}] ->", _shape_of(item))
-
-                if len(out) < 3:
-                    raise RuntimeError("SS model did not return (output, spat_attn, spec_attn)")
-
-                pred, spat_attn, spec_attn = out[0], out[1], out[2]
-
-                pred_sigmoid = torch.sigmoid(pred)
+                pred_sigmoid = torch.sigmoid(pred / float(temperature))
                 pred_np = pred_sigmoid.squeeze(0).detach().cpu().numpy().astype(np.float32)
+                logit_np = pred.squeeze(0).detach().cpu().numpy().astype(np.float32)
 
                 if pred_np.ndim == 3 and pred_np.shape[0] == 1:
                     pred_np = pred_np[0]
                 elif pred_np.ndim == 3 and pred_np.shape[-1] == 1:
                     pred_np = pred_np[..., 0]
 
+                if logit_np.ndim == 3 and logit_np.shape[0] == 1:
+                    logit_np = logit_np[0]
+                elif logit_np.ndim == 3 and logit_np.shape[-1] == 1:
+                    logit_np = logit_np[..., 0]
+
                 if pred_np.ndim != 2:
                     raise RuntimeError(f"Expected prob_map to be 2D after squeeze, got {pred_np.shape}")
+                if logit_np.ndim != 2:
+                    raise RuntimeError(f"Expected logit_map to be 2D after squeeze, got {logit_np.shape}")
 
                 prob_map = pred_np
+                logit_map = logit_np
                 spatial_map = _extract_spatial_attention_map(spat_attn, patch_hw=(h, w))
                 spectral_vec = _extract_spectral_attention_vector(spec_attn)
 
             else:
                 dprint("Calling SA model forward()")
                 pred = self.model(x, ts)
-                pred_sigmoid = torch.sigmoid(pred)
+                pred_sigmoid = torch.sigmoid(pred / float(temperature))
                 pred_np = pred_sigmoid.squeeze(0).detach().cpu().numpy().astype(np.float32)
+                logit_np = pred.squeeze(0).detach().cpu().numpy().astype(np.float32)
 
                 if pred_np.ndim == 3 and pred_np.shape[0] == 1:
                     pred_np = pred_np[0]
                 elif pred_np.ndim == 3 and pred_np.shape[-1] == 1:
                     pred_np = pred_np[..., 0]
 
+                if logit_np.ndim == 3 and logit_np.shape[0] == 1:
+                    logit_np = logit_np[0]
+                elif logit_np.ndim == 3 and logit_np.shape[-1] == 1:
+                    logit_np = logit_np[..., 0]
+
                 if pred_np.ndim != 2:
                     raise RuntimeError(f"Expected prob_map to be 2D after squeeze, got {pred_np.shape}")
+                if logit_np.ndim != 2:
+                    raise RuntimeError(f"Expected logit_map to be 2D after squeeze, got {logit_np.shape}")
 
                 prob_map = pred_np
+                logit_map = logit_np
                 spatial_map = np.zeros((h, w), dtype=np.float32)
                 spectral_vec = np.zeros((100,), dtype=np.float32)
 
@@ -382,6 +464,9 @@ class HyperSigmaWrapper:
 
             return {
                 "prob_map": prob_map,
+                "probability_map": prob_map,
+                "logit_map": logit_map,
+                "logit_mean": np.asarray(float(np.mean(logit_map)), dtype=np.float32),
                 "spatial_attn": spatial_map,
                 "spectral_attn": spectral_vec,
             }
@@ -432,11 +517,20 @@ def load_model(
             with _pushd(_HYPERSPECTRAL_DETECTION_ROOT):
                 model = SSHTDFramework(args=args, img_size=patch_size, in_channels=in_channels)
 
+            # 1) まず pretrained backbone を読む
             spat_ckpt = Path(spat_checkpoint) if spat_checkpoint else _default_spat_checkpoint()
             spec_ckpt = Path(spec_checkpoint) if spec_checkpoint else _default_spec_checkpoint()
 
             load_info["spat"] = _smart_load_submodule(model.spat_encoder, spat_ckpt, "spat_encoder")
             load_info["spec"] = _smart_load_submodule(model.spec_encoder, spec_ckpt, "spec_encoder")
+
+            # 2) その後で fine-tuned checkpoint があれば model 全体へ上書き
+            if model_checkpoint is not None:
+                load_info["fine_tuned"] = _smart_load_full_model(
+                    model=model,
+                    checkpoint_path=model_checkpoint,
+                    name="fine_tuned_model",
+                )
 
             wrapper = HyperSigmaWrapper(
                 model=model,
@@ -459,10 +553,17 @@ def load_model(
         spat_ckpt = (
             Path(spat_checkpoint)
             if spat_checkpoint
-            else Path(model_checkpoint) if model_checkpoint
+            else Path(model_checkpoint) if model_checkpoint and Path(model_checkpoint).suffix == ".pth"
             else _default_spat_checkpoint()
         )
         load_info["spat"] = _smart_load_submodule(model.encoder, spat_ckpt, "encoder")
+
+        if model_checkpoint is not None:
+            load_info["fine_tuned"] = _smart_load_full_model(
+                model=model,
+                checkpoint_path=model_checkpoint,
+                name="fine_tuned_model",
+            )
 
         wrapper = HyperSigmaWrapper(
             model=model,

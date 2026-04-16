@@ -1,0 +1,56 @@
+{
+  "baseline_test_tuned": {
+    "metrics_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/eval_v3/baseline_test_metrics_tuned.json",
+    "score_distribution": {
+      "min": 0.08658602833747864,
+      "max": 0.42817404866218567,
+      "mean": 0.27049654951462376,
+      "std": 0.11301559631562652,
+      "q05": 0.11107065379619599,
+      "q50": 0.30502983927726746,
+      "q95": 0.41917309165000916,
+      "frac_le_0_01": 0.0,
+      "frac_ge_0_99": 0.0,
+      "frac_le_0_05": 0.0,
+      "frac_ge_0_95": 0.0
+    },
+    "brier_score": 0.14823794532448842,
+    "ece": 0.10573606078441328
+  },
+  "hypersigma_test_tuned_uncalibrated": {
+    "metrics_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/test_metrics_tuned_uncalibrated.json",
+    "score_distribution": {
+      "min": 2.0031317087594784e-11,
+      "max": 2.6790446885886138e-06,
+      "mean": 3.303242684830811e-07,
+      "std": 7.391912666833782e-07,
+      "q05": 2.3173914661884834e-09,
+      "q50": 2.8550548497856608e-08,
+      "q95": 1.7480330864224932e-06,
+      "frac_le_0_01": 1.0,
+      "frac_ge_0_99": 0.0,
+      "frac_le_0_05": 1.0,
+      "frac_ge_0_95": 0.0
+    },
+    "brier_score": 0.2307688072090009,
+    "ece": 0.2307689004449623
+  },
+  "hypersigma_test_tuned_calibrated": {
+    "metrics_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/test_metrics_tuned_calibrated.json",
+    "score_distribution": {
+      "min": 0.2982471462366597,
+      "max": 0.39039431779730044,
+      "mean": 0.35277927763031963,
+      "std": 0.022125681400180373,
+      "q05": 0.32199254132411576,
+      "q50": 0.3535646897736238,
+      "q95": 0.3861155152188322,
+      "frac_le_0_01": 0.0,
+      "frac_ge_0_99": 0.0,
+      "frac_le_0_05": 0.0,
+      "frac_ge_0_95": 0.0
+    },
+    "brier_score": 0.1863294830508086,
+    "ece": 0.12201004686108885
+  }
+}

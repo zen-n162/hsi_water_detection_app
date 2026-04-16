@@ -1,0 +1,9 @@
+{
+  "source_metrics_json": "experiments/runs_v3/E02_head_only_posw_v3_block224/val_metrics_calibrated.json",
+  "criterion": "f1",
+  "best_threshold": 0.327428693347738,
+  "best_f1": 0.625,
+  "precision_at_best": 0.45454545454545453,
+  "recall_at_best": 1.0,
+  "n_thresholds": 14
+}

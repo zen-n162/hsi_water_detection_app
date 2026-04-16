@@ -1,0 +1,319 @@
+{
+  "manifest_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/annotations/manifests/wetness_manifest_from_confidence_ali_blocksplit.csv",
+  "input_dir": "/home/zennakamura/MasterResearch/hsi_water_detection_app/datasets/processed/wetness_pretrain_v3",
+  "split_policy": "spatial_block",
+  "dataset_counts": {
+    "all": 89,
+    "train": 62,
+    "val": 14,
+    "test": 13
+  },
+  "unique_block_counts": {
+    "all": 22,
+    "train": 13,
+    "val": 5,
+    "test": 4
+  },
+  "label_counts": {
+    "all": {
+      "dry": 64,
+      "wet": 25
+    },
+    "train": {
+      "dry": 45,
+      "wet": 17
+    },
+    "val": {
+      "dry": 9,
+      "wet": 5
+    },
+    "test": {
+      "dry": 10,
+      "wet": 3
+    }
+  },
+  "confidence_tier_counts": {
+    "all": {
+      "0": 64,
+      "3": 18,
+      "1": 7
+    },
+    "train": {
+      "0": 45,
+      "3": 13,
+      "1": 4
+    },
+    "val": {
+      "0": 9,
+      "1": 2,
+      "3": 3
+    },
+    "test": {
+      "0": 10,
+      "1": 1,
+      "3": 2
+    }
+  },
+  "sample_schema_check": {
+    "keys": [
+      "block_col",
+      "block_id",
+      "block_row",
+      "col_start",
+      "col_stop",
+      "confidence",
+      "confidence_tier",
+      "cube",
+      "file",
+      "input_path",
+      "label",
+      "label_name",
+      "notes",
+      "path",
+      "row_start",
+      "row_stop",
+      "sample_id",
+      "scene_id",
+      "sensor",
+      "source",
+      "split",
+      "split_policy",
+      "valid_ratio",
+      "wet_ratio_valid"
+    ],
+    "cube_shape": [
+      170,
+      64,
+      64
+    ],
+    "label": 0.0,
+    "confidence": 0.921875,
+    "split": "train",
+    "file": "confali_00001.npz",
+    "path": "datasets/processed/wetness_pretrain_v3/confali_00001.npz",
+    "block_id": "block_r000_c010",
+    "split_policy": "spatial_block",
+    "confidence_tier": 0.0,
+    "valid_ratio": 0.922119,
+    "wet_ratio_valid": 0.000265
+  },
+  "spatial_leakage_audit": {
+    "test::train": {
+      "min_row_gap": 0,
+      "min_col_gap": 0,
+      "min_euclidean_gap": 0.0,
+      "touching_or_overlapping_pairs": 12,
+      "closest_examples": [
+        {
+          "left_sample_id": "confali_00001",
+          "left_split": "train",
+          "left_block_id": "block_r000_c010",
+          "right_sample_id": "confali_00004",
+          "right_split": "test",
+          "right_block_id": "block_r000_c011",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        },
+        {
+          "left_sample_id": "confali_00003",
+          "left_split": "train",
+          "left_block_id": "block_r000_c010",
+          "right_sample_id": "confali_00004",
+          "right_split": "test",
+          "right_block_id": "block_r000_c011",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        },
+        {
+          "left_sample_id": "confali_00003",
+          "left_split": "train",
+          "left_block_id": "block_r000_c010",
+          "right_sample_id": "confali_00008",
+          "right_split": "test",
+          "right_block_id": "block_r000_c011",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        },
+        {
+          "left_sample_id": "confali_00004",
+          "left_split": "test",
+          "left_block_id": "block_r000_c011",
+          "right_sample_id": "confali_00007",
+          "right_split": "train",
+          "right_block_id": "block_r000_c010",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        },
+        {
+          "left_sample_id": "confali_00007",
+          "left_split": "train",
+          "left_block_id": "block_r000_c010",
+          "right_sample_id": "confali_00008",
+          "right_split": "test",
+          "right_block_id": "block_r000_c011",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        }
+      ]
+    },
+    "train::val": {
+      "min_row_gap": 0,
+      "min_col_gap": 0,
+      "min_euclidean_gap": 0.0,
+      "touching_or_overlapping_pairs": 26,
+      "closest_examples": [
+        {
+          "left_sample_id": "confali_00005",
+          "left_split": "train",
+          "left_block_id": "block_r000_c010",
+          "right_sample_id": "confali_00009",
+          "right_split": "val",
+          "right_block_id": "block_r001_c010",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        },
+        {
+          "left_sample_id": "confali_00005",
+          "left_split": "train",
+          "left_block_id": "block_r000_c010",
+          "right_sample_id": "confali_00010",
+          "right_split": "val",
+          "right_block_id": "block_r001_c010",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        },
+        {
+          "left_sample_id": "confali_00005",
+          "left_split": "train",
+          "left_block_id": "block_r000_c010",
+          "right_sample_id": "confali_00011",
+          "right_split": "val",
+          "right_block_id": "block_r001_c010",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        },
+        {
+          "left_sample_id": "confali_00006",
+          "left_split": "train",
+          "left_block_id": "block_r000_c010",
+          "right_sample_id": "confali_00010",
+          "right_split": "val",
+          "right_block_id": "block_r001_c010",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        },
+        {
+          "left_sample_id": "confali_00006",
+          "left_split": "train",
+          "left_block_id": "block_r000_c010",
+          "right_sample_id": "confali_00011",
+          "right_split": "val",
+          "right_block_id": "block_r001_c010",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        }
+      ]
+    },
+    "test::val": {
+      "min_row_gap": 0,
+      "min_col_gap": 0,
+      "min_euclidean_gap": 0.0,
+      "touching_or_overlapping_pairs": 1,
+      "closest_examples": [
+        {
+          "left_sample_id": "confali_00008",
+          "left_split": "test",
+          "left_block_id": "block_r000_c011",
+          "right_sample_id": "confali_00012",
+          "right_split": "val",
+          "right_block_id": "block_r001_c010",
+          "row_gap": 0,
+          "col_gap": 0,
+          "euclidean_gap": 0.0
+        },
+        {
+          "left_sample_id": "confali_00008",
+          "left_split": "test",
+          "left_block_id": "block_r000_c011",
+          "right_sample_id": "confali_00011",
+          "right_split": "val",
+          "right_block_id": "block_r001_c010",
+          "row_gap": 0,
+          "col_gap": 64,
+          "euclidean_gap": 64.0
+        },
+        {
+          "left_sample_id": "confali_00004",
+          "left_split": "test",
+          "left_block_id": "block_r000_c011",
+          "right_sample_id": "confali_00012",
+          "right_split": "val",
+          "right_block_id": "block_r001_c010",
+          "row_gap": 64,
+          "col_gap": 0,
+          "euclidean_gap": 64.0
+        },
+        {
+          "left_sample_id": "confali_00004",
+          "left_split": "test",
+          "left_block_id": "block_r000_c011",
+          "right_sample_id": "confali_00011",
+          "right_split": "val",
+          "right_block_id": "block_r001_c010",
+          "row_gap": 64,
+          "col_gap": 64,
+          "euclidean_gap": 90.50966799187809
+        },
+        {
+          "left_sample_id": "confali_00008",
+          "left_split": "test",
+          "left_block_id": "block_r000_c011",
+          "right_sample_id": "confali_00016",
+          "right_split": "val",
+          "right_block_id": "block_r001_c010",
+          "row_gap": 64,
+          "col_gap": 64,
+          "euclidean_gap": 90.50966799187809
+        }
+      ]
+    }
+  },
+  "touching_pair_counts": {
+    "test::train": 12,
+    "train::val": 26,
+    "test::val": 1
+  },
+  "compared_to": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/eval_v2/dataset_runtime_audit.json",
+  "leakage_comparison": {
+    "pairs": [
+      {
+        "pair": "test::train",
+        "current_touching_pairs": 12,
+        "previous_touching_pairs": 50,
+        "delta_touching_pairs": -38
+      },
+      {
+        "pair": "test::val",
+        "current_touching_pairs": 1,
+        "previous_touching_pairs": 11,
+        "delta_touching_pairs": -10
+      },
+      {
+        "pair": "train::val",
+        "current_touching_pairs": 26,
+        "previous_touching_pairs": 43,
+        "delta_touching_pairs": -17
+      }
+    ]
+  }
+}

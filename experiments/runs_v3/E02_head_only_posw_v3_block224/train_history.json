@@ -1,0 +1,225 @@
+{
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 65.1362580637778,
+      "val_roc_auc": 0.5,
+      "val_pr_auc": 0.35714285714285715,
+      "val_precision": 0.35714285714285715,
+      "val_recall": 1.0,
+      "val_f1": 0.5263157894736842,
+      "score": 0.4285714285714286
+    },
+    {
+      "epoch": 2,
+      "train_loss": 74.38438933126388,
+      "val_roc_auc": 0.4444444444444445,
+      "val_pr_auc": 0.41025641025641024,
+      "val_precision": 0.38461538461538464,
+      "val_recall": 1.0,
+      "val_f1": 0.5555555555555556,
+      "score": 0.4273504273504274
+    },
+    {
+      "epoch": 3,
+      "train_loss": 12.70596351381579,
+      "val_roc_auc": 0.3555555555555556,
+      "val_pr_auc": 0.3304761904761905,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0,
+      "score": 0.34301587301587305
+    },
+    {
+      "epoch": 4,
+      "train_loss": 23.761480173757,
+      "val_roc_auc": 0.5555555555555556,
+      "val_pr_auc": 0.47090909090909083,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0,
+      "score": 0.5132323232323233
+    },
+    {
+      "epoch": 5,
+      "train_loss": 22.42511906883409,
+      "val_roc_auc": 0.6444444444444445,
+      "val_pr_auc": 0.5099567099567099,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0,
+      "score": 0.5772005772005773
+    },
+    {
+      "epoch": 6,
+      "train_loss": 17.19567613858981,
+      "val_roc_auc": 0.6000000000000001,
+      "val_pr_auc": 0.5792424242424243,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0,
+      "score": 0.5896212121212122
+    },
+    {
+      "epoch": 7,
+      "train_loss": 10.787446069031683,
+      "val_roc_auc": 0.5111111111111112,
+      "val_pr_auc": 0.5235897435897436,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0,
+      "score": 0.5173504273504275
+    },
+    {
+      "epoch": 8,
+      "train_loss": 11.540223958030824,
+      "val_roc_auc": 0.5777777777777778,
+      "val_pr_auc": 0.5716666666666668,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0,
+      "score": 0.5747222222222224
+    },
+    {
+      "epoch": 9,
+      "train_loss": 14.972838753000683,
+      "val_roc_auc": 0.5777777777777778,
+      "val_pr_auc": 0.5472222222222223,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0,
+      "score": 0.5625
+    },
+    {
+      "epoch": 10,
+      "train_loss": 8.759889647728356,
+      "val_roc_auc": 0.6,
+      "val_pr_auc": 0.557936507936508,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0,
+      "score": 0.5789682539682539
+    },
+    {
+      "epoch": 11,
+      "train_loss": 14.714246588849253,
+      "val_roc_auc": 0.4666666666666667,
+      "val_pr_auc": 0.4027272727272727,
+      "val_precision": 0.4166666666666667,
+      "val_recall": 1.0,
+      "val_f1": 0.5882352941176471,
+      "score": 0.4346969696969697
+    },
+    {
+      "epoch": 12,
+      "train_loss": 22.6194934597315,
+      "val_roc_auc": 0.5888888888888889,
+      "val_pr_auc": 0.4068181818181818,
+      "val_precision": 0.35714285714285715,
+      "val_recall": 1.0,
+      "val_f1": 0.5263157894736842,
+      "score": 0.4978535353535354
+    },
+    {
+      "epoch": 13,
+      "train_loss": 17.748117912351255,
+      "val_roc_auc": 0.4444444444444445,
+      "val_pr_auc": 0.3960606060606061,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0,
+      "score": 0.4202525252525253
+    },
+    {
+      "epoch": 14,
+      "train_loss": 5.087004538007727,
+      "val_roc_auc": 0.48888888888888893,
+      "val_pr_auc": 0.5163170163170163,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0,
+      "score": 0.5026029526029526
+    },
+    {
+      "epoch": 15,
+      "train_loss": 7.583884250973502,
+      "val_roc_auc": 0.5111111111111112,
+      "val_pr_auc": 0.5496503496503498,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0,
+      "score": 0.5303807303807304
+    },
+    {
+      "epoch": 16,
+      "train_loss": 6.107758432796653,
+      "val_roc_auc": 0.4666666666666667,
+      "val_pr_auc": 0.5108225108225108,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0,
+      "score": 0.48874458874458876
+    },
+    {
+      "epoch": 17,
+      "train_loss": 4.620821380687337,
+      "val_roc_auc": 0.46666666666666673,
+      "val_pr_auc": 0.49631701631701636,
+      "val_precision": 0.5,
+      "val_recall": 0.2,
+      "val_f1": 0.2857142857142857,
+      "score": 0.48149184149184154
+    },
+    {
+      "epoch": 18,
+      "train_loss": 3.8737943919224502,
+      "val_roc_auc": 0.33333333333333337,
+      "val_pr_auc": 0.3167932067932068,
+      "val_precision": 0.25,
+      "val_recall": 0.2,
+      "val_f1": 0.2222222222222222,
+      "score": 0.32506327006327007
+    },
+    {
+      "epoch": 19,
+      "train_loss": 6.4246735125404575,
+      "val_roc_auc": 0.3555555555555556,
+      "val_pr_auc": 0.3263170163170163,
+      "val_precision": 0.25,
+      "val_recall": 0.2,
+      "val_f1": 0.2222222222222222,
+      "score": 0.340936285936286
+    },
+    {
+      "epoch": 20,
+      "train_loss": 4.347243063970499,
+      "val_roc_auc": 0.35555555555555557,
+      "val_pr_auc": 0.3232034632034632,
+      "val_precision": 0.25,
+      "val_recall": 0.4,
+      "val_f1": 0.3076923076923077,
+      "score": 0.3393795093795094
+    }
+  ],
+  "dataset_info": {
+    "manifest_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/annotations/manifests/wetness_manifest_from_confidence_ali_blocksplit.csv",
+    "input_dir": "/home/zennakamura/MasterResearch/hsi_water_detection_app/datasets/processed/wetness_pretrain_v3",
+    "train_split": "train",
+    "val_split": "val",
+    "eval_split": "test",
+    "train_samples": 62,
+    "val_samples": 14,
+    "train_label_counts": {
+      "dry": 45,
+      "wet": 17
+    },
+    "val_label_counts": {
+      "dry": 9,
+      "wet": 5
+    }
+  },
+  "device": "cuda",
+  "best_score": 0.5896212121212122,
+  "best_checkpoint": "experiments/runs_v3/E02_head_only_posw_v3_block224/model_best.pt",
+  "last_checkpoint": "experiments/runs_v3/E02_head_only_posw_v3_block224/model_last.pt"
+}
