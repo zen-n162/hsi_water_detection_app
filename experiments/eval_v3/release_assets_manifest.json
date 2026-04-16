@@ -1,0 +1,35 @@
+{
+  "release_title": "hypersigma-v3-calibrated-prod-candidate",
+  "freeze_tag": "hypersigma-v3-calibrated-prod-candidate",
+  "attachable_assets": [
+    {
+      "path": "configs/deploy/hypersigma_v3_calibrated.json",
+      "role": "production_default_deploy_config"
+    },
+    {
+      "path": "experiments/eval_v3/release_freeze.json",
+      "role": "freeze_manifest"
+    },
+    {
+      "path": "experiments/eval_v3/runtime_versions.json",
+      "role": "runtime_version_summary"
+    },
+    {
+      "path": "experiments/eval_v3/release_verification.json",
+      "role": "release_verification"
+    },
+    {
+      "path": "docs/final_hypersigma_gui_handover.md",
+      "role": "handover_document"
+    },
+    {
+      "path": "docs/model_card_hypersigma_v3_calibrated.md",
+      "role": "model_card"
+    },
+    {
+      "path": "docs/release_notes_hypersigma_v3_calibrated.md",
+      "role": "release_notes"
+    }
+  ],
+  "notes": "Checkpoint and patch dataset are referenced by path and not attached as release assets in this repository."
+}

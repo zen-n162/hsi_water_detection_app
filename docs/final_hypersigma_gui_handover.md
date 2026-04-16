@@ -160,6 +160,15 @@ The shortest reproduction path after the freeze is:
 
 The concrete commands are tracked in `experiments/eval_v3/commands_run.txt`.
 
+For a single entry-point helper, use:
+
+- `scripts/reproduce_release_candidate.sh`
+
+For release packaging:
+
+- Release notes: `docs/release_notes_hypersigma_v3_calibrated.md`
+- Release assets manifest: `experiments/eval_v3/release_assets_manifest.json`
+
 ## Next Improvements
 
 - Add a baseline inference path to the backend if GUI-side fallback selection becomes necessary.
