@@ -1,72 +1,157 @@
-# HSI 水検出アプリケーション
+# hsi_water_detection_app
 
-このリポジトリは、ハイパースペクトル画像 (HSI) を入力として、水分子由来のスペクトル成分を検出し、その根拠となるアテンションマップを可視化するための実験用アプリケーションの実装です。主な対象センサは EO‑1/Hyperion や HISUI などの宇宙・航空搭載ハイパースペクトルセンサを想定しています。
+GUI-backed wetness and water-related hyperspectral inference workflow built around **HyperSIGMA** and a calibrated production-candidate deployment path.
 
-## 特長
+This repository now contains both:
 
-* **多様な入力フォーマット:** BigTIFF/GeoTIFF、ENVI (BSQ/BIL/BIP + `.hdr`)、HDF5 などの形式に対応できるよう設計されています。ヘッダファイルから波長情報を読み取り、波長–バンドの対応を保持します。
-* **前処理パイプライン:** 不正バンドの除去、放射・反射率変換、タイル分割、幾何整合など、ハイパースペクトルデータ特有の前処理をスクリプト化して再現性を確保します。
-* **HyperSIGMA 推論:** 事前学習済み HyperSIGMA モデルを用いて水検出を行い、各画素の水検出確率とともに空間方向・スペクトル方向のアテンションを取得します。
-* **可視化:** 空間アテンションを RGB 合成画像に重ねて表示し、スペクトルアテンションを波長–重みのグラフとして出力します。
-* **CLI/GUI 対応:** コマンドラインからのバッチ処理に加えて、将来的には簡易 GUI も搭載予定です。
+1. a **research pipeline** for building patch datasets, training/evaluating baseline and HyperSIGMA models, tuning thresholds, auditing split leakage, and calibrating scores, and  
+2. a **GUI / backend inference application** that loads a frozen deploy configuration and runs ROI-based inference with provenance tracking.
 
-## セットアップ
+## Current status
 
-1. このリポジトリをクローンします。
+The current production-candidate GUI default is the **calibrated HyperSIGMA v3 block-split run**:
 
-   ```bash
-   git clone <REPOSITORY_URL>
-   cd hsi_water_detection_app
-   ```
+- Deploy config: `configs/deploy/hypersigma_v3_calibrated.json`
+- Run name: `E02_head_only_posw_v3_block224`
+- Model type: `ss`
+- Patch size: `64`
+- Stride: `32`
+- Band count: `170`
+- Label source: `confidence_ali.tif`
+- Manifest: `annotations/manifests/wetness_manifest_from_confidence_ali_blocksplit.csv`
+- Patch dataset: `datasets/processed/wetness_pretrain_v3`
+- Checkpoint: `experiments/runs_v3/E02_head_only_posw_v3_block224/model_best.pt`
+- Calibration: `experiments/runs_v3/E02_head_only_posw_v3_block224/temperature_scaling_val.json`
+- Threshold: `0.327428693347738`
 
-2. Conda 環境を用意する場合は `environment.yml` から環境を構築します。
+A calibrated HyperSIGMA GUI default was selected because it keeps the existing attention-capable inference path while preserving competitive ranking performance and improved calibration behavior relative to the uncalibrated run.
 
-   ```bash
-   conda env create -f environment.yml
-   conda activate hsi-water-detection
-   ```
+## What this project does
 
-   もしくは、必要な依存パッケージを `requirements.txt` から直接インストールします：
+### Research side
+- Rebuilds patch-level datasets from `confidence_ali.tif`
+- Supports baseline CNN and HyperSIGMA fine-tuning experiments
+- Evaluates on val/test with:
+  - ROC-AUC
+  - PR-AUC
+  - Precision / Recall / F1
+  - confusion matrix
+  - optional Brier score / ECE in the v3 pipeline
+- Tunes thresholds from validation predictions
+- Fits validation-only temperature scaling
+- Compares runs and summarizes experiment rankings
+- Audits leakage risk under different split policies
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+### Application side
+- Serves an ROI-based inference backend
+- Supports deploy-config-driven default model loading
+- Produces:
+  - probability maps
+  - probability overlays
+  - spatial attention overlays
+  - spectral attention plots
+  - metadata / provenance JSON
+- Exposes the deployed checkpoint, threshold, calibration file, manifest, dataset, split policy, and executed device through API responses and saved metadata
 
-3. 必要に応じて HyperSIGMA の重みファイルを `models/` フォルダに配置します。重みファイルの取得方法については公式リポジトリや論文付録を参照してください。
+## Repository structure
 
-## 使い方
-
-CLI からの実行例を以下に示します。まずは `src/cli.py` を実行してください。
-
-```bash
-python -m src.cli \
-    --input /path/to/your/hsi_file.tif \
-    --output_dir /path/to/output \
-    --header /path/to/your/hsi_file.hdr \
-    --patch_size 64 --stride 32 \
-    --model_checkpoint models/hyper_sigma.pth
+```text
+backend/
+  app/
+    api/
+    services/
+configs/
+  deploy/
+docs/
+frontend/
+research/
+  datasets/
+  evaluation/
+  training/
+src/
+  hsi_water_detection_app/
+annotations/
+  manifests/
+datasets/
+  processed/
+experiments/
+  runs_v3/
+  eval_v3/
+outputs/
 ```
 
-主な引数の意味：
+## Main documents
 
-* `--input` – 入力となるハイパースペクトル画像ファイルのパス。
-* `--output_dir` – 推論結果を保存するディレクトリ。
-* `--header` – ENVI ヘッダファイル（波長やバンド情報を保持）へのパス。省略した場合はバンド番号に基づいてスペクトルアテンションをプロットします。
-* `--patch_size` – モデルに与えるパッチのサイズ (デフォルト: 64)。
-* `--stride` – パッチ分割時のストライド (デフォルト: 32)。
-* `--model_checkpoint` – HyperSIGMA モデルの重みファイルへのパス。
+- [Research pipeline](docs/research_pipeline.md)
+- [GUI inference contract](docs/gui_inference_contract.md)
+- [Model card: HyperSIGMA v3 calibrated](docs/model_card_hypersigma_v3_calibrated.md)
 
-出力として、以下のファイルが `--output_dir` に保存されます。
+## Quick start
 
-* `prob_map.tif` – 水検出確率マップ (GeoTIFF)。
-* `spatial_attn.png` – 空間アテンションをカラーオーバーレイした画像。
-* `spectral_attn.csv` – 各ターゲットピクセルに対する波長–アテンション重みの表。
-* ほか、再構築した RGB 画像やメタデータ JSON など。
+### 1. Backend
+```bash
+cd /home/zennakamura/MasterResearch/hsi_water_detection_app
+PYTHONPATH=src:. uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
+```
 
-## 現在の進捗
+### 2. Frontend
+```bash
+cd /home/zennakamura/MasterResearch/hsi_water_detection_app/frontend
+npm run dev -- --host
+```
 
-このリポジトリは開発中です。現時点では、前処理および推論のためのスケルトンコードが `src/hsi_app.py` に含まれています。具体的なデータ読み込みや HyperSIGMA モデルの実装部分は未完成のため、利用の際には各自で関数を実装してください。
+### 3. Streamlit app (if used in your branch)
+```bash
+cd /home/zennakamura/MasterResearch/hsi_water_detection_app
+python -m streamlit run ./src/hsi_water_detection_app/app.py
+```
 
-## 貢献
+## Frozen production-candidate artifacts
 
-バグ報告やプルリクエストは歓迎します。実装の改善や新機能の追加など、ご協力いただける場合は issue を立ててご相談ください。
+The current GUI production-candidate freeze is documented through:
+
+- `experiments/eval_v3/release_freeze.json`
+- `experiments/eval_v3/release_verification.json`
+- `experiments/eval_v3/runtime_versions.json`
+- `experiments/eval_v3/gui_acceptance_result.json`
+- `experiments/eval_v3/deploy_consistency_audit.json`
+- `docs/final_hypersigma_gui_handover.md`
+
+## Research highlights so far
+
+### Data pipeline
+- Source of truth moved from older ROI-centric labeling to `confidence_ali.tif`
+- Patch manifest regenerated from raster truth
+- v3 dataset uses **spatial block split** with `block_size=224`
+- Leakage was reduced relative to earlier dataset versions
+
+### Model evaluation
+- Baseline remains an important reference path
+- HyperSIGMA experiments E01 / E02 / E05 / E07 / E09 were organized and ranked
+- `E02_head_only_posw_v3_block224` is the current best HyperSIGMA run for GUI deployment
+- Calibration was added with validation-only temperature scaling
+
+### Deployment / GUI integration
+- GUI, backend, CLI, and metadata now resolve from a single deploy config
+- Provenance is persisted in API responses and saved output metadata
+- GPU execution was verified in the acceptance path
+- The release candidate was frozen with a tagged Git commit
+
+## Known limitations
+
+- Dataset size is still small, so split policy strongly affects results
+- HyperSIGMA score collapse required explicit calibration handling
+- Baseline is currently a reference path and not the main GUI default inference route
+- Frontend and backend should continue to be tested whenever deploy defaults are changed
+
+## Recommended next work
+
+1. Add a baseline GUI inference path alongside HyperSIGMA
+2. Improve calibration beyond single-temperature scaling
+3. Strengthen spatial split policy and leakage controls further
+4. Add explicit score-collapse diagnostics to training/evaluation
+5. Revisit threshold policy for more stable operating points
+
+## Citation
+
+If you use HyperSIGMA itself, cite the original HyperSIGMA paper and repository. The upstream project README is included in the repository history and was used as the foundation model reference during this integration work.
