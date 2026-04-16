@@ -28,49 +28,49 @@
     {
       "file": "sample_0004.npz",
       "y_true": 1,
-      "y_score": 0.9215500354766846,
+      "y_score": 0.526107132434845,
       "y_pred": 1
     },
     {
       "file": "sample_0005.npz",
       "y_true": 0,
-      "y_score": 0.8161745071411133,
+      "y_score": 0.5210778713226318,
       "y_pred": 1
     },
     {
       "file": "sample_0019.npz",
       "y_true": 1,
-      "y_score": 0.8913832306861877,
+      "y_score": 0.5259363055229187,
       "y_pred": 1
     },
     {
       "file": "sample_0020.npz",
       "y_true": 1,
-      "y_score": 0.8243752717971802,
+      "y_score": 0.5090233087539673,
       "y_pred": 1
     },
     {
       "file": "sample_0021.npz",
       "y_true": 1,
-      "y_score": 0.7291663289070129,
+      "y_score": 0.5261074304580688,
       "y_pred": 1
     },
     {
       "file": "sample_0035.npz",
       "y_true": 0,
-      "y_score": 0.31680169701576233,
+      "y_score": 0.3315250277519226,
       "y_pred": 0
     },
     {
       "file": "sample_0036.npz",
       "y_true": 0,
-      "y_score": 0.20485329627990723,
+      "y_score": 0.17606861889362335,
       "y_pred": 0
     },
     {
       "file": "sample_0037.npz",
       "y_true": 0,
-      "y_score": 0.37947335839271545,
+      "y_score": 0.2624382972717285,
       "y_pred": 0
     }
   ]

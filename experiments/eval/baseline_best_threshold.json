@@ -1,7 +1,7 @@
 {
   "source_metrics_json": "experiments/eval/baseline_val_metrics.json",
   "criterion": "f1",
-  "best_threshold": 0.7291663289070129,
+  "best_threshold": 0.5090233087539673,
   "best_f1": 0.888888888888889,
   "precision_at_best": 0.8,
   "recall_at_best": 1.0,
