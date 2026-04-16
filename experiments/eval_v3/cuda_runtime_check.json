@@ -1,0 +1,13 @@
+{
+  "generated_at": "2026-04-17T05:07:41",
+  "torch_version": "2.7.1+cu126",
+  "cuda_version": "12.6",
+  "cuda_is_available": true,
+  "device_count": 1,
+  "device_name_0": "NVIDIA RTX 4500 Ada Generation",
+  "nvidia_smi_L": {
+    "returncode": 0,
+    "stdout": "GPU 0: NVIDIA RTX 4500 Ada Generation (UUID: GPU-c3d093c0-6e97-0f99-55b2-1be276fb24d7)",
+    "stderr": ""
+  }
+}

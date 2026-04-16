@@ -1,0 +1,42 @@
+{
+  "source_of_truth": {
+    "label_raster": "../HyperSIGMA/HyperspectralDetection/Hyperion_WaterLabel_20111222/data/processed/labels/confidence_ali.tif",
+    "manifest_v3": "annotations/manifests/wetness_manifest_from_confidence_ali_blocksplit.csv",
+    "manifest_v3_summary": "annotations/manifests/wetness_manifest_from_confidence_ali_blocksplit.summary.json",
+    "patch_dataset_v3": "datasets/processed/wetness_pretrain_v3",
+    "split_policy": "spatial_block(block_size=224)"
+  },
+  "evaluation": {
+    "pipeline_summary": "experiments/eval_v3/pipeline_summary.json",
+    "leakage_comparison": "experiments/eval_v3/leakage_comparison.json",
+    "best_run_selection": "experiments/eval_v3/best_run_selection.json",
+    "gui_default_recommendation": "experiments/eval_v3/gui_default_recommendation.json",
+    "cuda_runtime_check": "experiments/eval_v3/cuda_runtime_check.json",
+    "deploy_consistency_audit": "experiments/eval_v3/deploy_consistency_audit.json",
+    "gui_acceptance_result": "experiments/eval_v3/gui_acceptance_result.json",
+    "release_freeze": "experiments/eval_v3/release_freeze.json",
+    "ranking_csv": "experiments/eval_v3/hypersigma_finetune_ranking.csv",
+    "ranking_json": "experiments/eval_v3/hypersigma_finetune_ranking.json",
+    "score_distribution_comparison": "experiments/eval_v3/score_distribution_comparison.json"
+  },
+  "hypersigma_v3_calibrated_default": {
+    "run_dir": "experiments/runs_v3/E02_head_only_posw_v3_block224",
+    "model_checkpoint": "experiments/runs_v3/E02_head_only_posw_v3_block224/model_best.pt",
+    "temperature_json": "experiments/runs_v3/E02_head_only_posw_v3_block224/temperature_scaling_val.json",
+    "best_threshold_json": "experiments/runs_v3/E02_head_only_posw_v3_block224/best_val_threshold_calibrated.json",
+    "test_metrics_json": "experiments/runs_v3/E02_head_only_posw_v3_block224/test_metrics_tuned_calibrated.json"
+  },
+  "baseline_reference": {
+    "run_dir": "experiments/runs_v3/baseline_v3_block224",
+    "model_checkpoint": "experiments/runs_v3/baseline_v3_block224/model_best.pt",
+    "best_threshold_json": "experiments/eval_v3/baseline_best_val_threshold.json",
+    "test_metrics_json": "experiments/eval_v3/baseline_test_metrics_tuned.json"
+  },
+  "deployment": {
+    "deploy_config": "configs/deploy/hypersigma_v3_calibrated.json",
+    "gui_contract_doc": "docs/gui_inference_contract.md",
+    "gui_handover_doc": "docs/final_hypersigma_gui_handover.md",
+    "runtime_modes_doc": "docs/runtime_modes.md",
+    "next_research_backlog_doc": "docs/next_research_backlog.md"
+  }
+}

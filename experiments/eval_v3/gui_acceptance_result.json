@@ -1,0 +1,65 @@
+{
+  "generated_at": "2026-04-17T05:08:47",
+  "overall_ok": true,
+  "criteria": [
+    {
+      "name": "deploy_config_default_load",
+      "ok": true,
+      "detail": {
+        "deploy_config_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/configs/deploy/hypersigma_v3_calibrated.json"
+      }
+    },
+    {
+      "name": "frontend_shows_run_name_checkpoint_threshold_calibration",
+      "ok": true,
+      "detail": {
+        "frontend_app_tsx": "/home/zennakamura/MasterResearch/hsi_water_detection_app/frontend/src/App.tsx"
+      }
+    },
+    {
+      "name": "roi_inference_success",
+      "ok": true,
+      "detail": {
+        "smoke_result_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/eval_v3/gui_smoke_test_result.json",
+        "output_dir": "/home/zennakamura/MasterResearch/hsi_water_detection_app/outputs/web_ui/2026-04-17_050835"
+      }
+    },
+    {
+      "name": "probability_overlay_saved",
+      "ok": true,
+      "detail": {
+        "probability_overlay_png": "/home/zennakamura/MasterResearch/hsi_water_detection_app/outputs/web_ui/2026-04-17_050835/probability_overlay.png"
+      }
+    },
+    {
+      "name": "metadata_json_saved",
+      "ok": true,
+      "detail": {
+        "metadata_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/outputs/web_ui/2026-04-17_050835/metadata.json"
+      }
+    },
+    {
+      "name": "metadata_contains_resolved_checkpoint_threshold_calibration_run_name",
+      "ok": true,
+      "detail": {
+        "metadata_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/outputs/web_ui/2026-04-17_050835/metadata.json",
+        "resolved_model_checkpoint": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/model_best.pt",
+        "resolved_threshold": 0.327428693347738,
+        "resolved_temperature_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/temperature_scaling_val.json",
+        "resolved_run_name": "E02_head_only_posw_v3_block224"
+      }
+    },
+    {
+      "name": "executed_device_recorded",
+      "ok": true,
+      "detail": {
+        "metadata_executed_device": "cuda",
+        "api_executed_device": "cuda"
+      }
+    }
+  ],
+  "output_dir": "/home/zennakamura/MasterResearch/hsi_water_detection_app/outputs/web_ui/2026-04-17_050835",
+  "api_result_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/outputs/web_ui/2026-04-17_050835/api_result.json",
+  "metadata_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/outputs/web_ui/2026-04-17_050835/metadata.json",
+  "executed_device": "cuda"
+}

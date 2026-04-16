@@ -1,0 +1,230 @@
+{
+  "generated_at": "2026-04-17T05:08:47",
+  "deploy_config_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/configs/deploy/hypersigma_v3_calibrated.json",
+  "smoke_result_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/eval_v3/gui_smoke_test_result.json",
+  "api_result_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/outputs/web_ui/2026-04-17_050835/api_result.json",
+  "metadata_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/outputs/web_ui/2026-04-17_050835/metadata.json",
+  "checks": [
+    {
+      "name": "model_checkpoint_exists",
+      "ok": true,
+      "detail": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/model_best.pt"
+    },
+    {
+      "name": "temperature_json_exists",
+      "ok": true,
+      "detail": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/temperature_scaling_val.json"
+    },
+    {
+      "name": "manifest_exists",
+      "ok": true,
+      "detail": "/home/zennakamura/MasterResearch/hsi_water_detection_app/annotations/manifests/wetness_manifest_from_confidence_ali_blocksplit.csv"
+    },
+    {
+      "name": "dataset_exists",
+      "ok": true,
+      "detail": "/home/zennakamura/MasterResearch/hsi_water_detection_app/datasets/processed/wetness_pretrain_v3"
+    },
+    {
+      "name": "threshold_matches_best_val_threshold",
+      "ok": true,
+      "detail": {
+        "deploy_threshold": 0.327428693347738,
+        "best_threshold_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/best_val_threshold_calibrated.json",
+        "best_threshold": 0.327428693347738
+      }
+    },
+    {
+      "name": "run_name_matches_pipeline_summary",
+      "ok": true,
+      "detail": {
+        "deploy_run_name": "E02_head_only_posw_v3_block224",
+        "pipeline_run_name": "E02_head_only_posw_v3_block224"
+      }
+    },
+    {
+      "name": "run_name_matches_best_run_selection_checkpoint_parent",
+      "ok": true,
+      "detail": {
+        "deploy_run_name": "E02_head_only_posw_v3_block224",
+        "selection_checkpoint_parent": "E02_head_only_posw_v3_block224"
+      }
+    },
+    {
+      "name": "best_run_selection_label_consistent",
+      "ok": true,
+      "detail": {
+        "deploy_run_name": "E02_head_only_posw_v3_block224",
+        "selection_run_name": "E02_head_only_posw_v3_block224_calibrated"
+      }
+    },
+    {
+      "name": "api_response_matches_deploy_checkpoint",
+      "ok": true,
+      "detail": {
+        "api_resolved_model_checkpoint": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/model_best.pt",
+        "deploy_model_checkpoint": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/model_best.pt"
+      }
+    },
+    {
+      "name": "api_response_matches_deploy_temperature_json",
+      "ok": true,
+      "detail": {
+        "api_resolved_temperature_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/temperature_scaling_val.json",
+        "deploy_temperature_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/temperature_scaling_val.json"
+      }
+    },
+    {
+      "name": "api_response_matches_deploy_threshold",
+      "ok": true,
+      "detail": {
+        "api_resolved_threshold": 0.327428693347738,
+        "deploy_threshold": 0.327428693347738
+      }
+    },
+    {
+      "name": "api_response_matches_deploy_manifest",
+      "ok": true,
+      "detail": {
+        "api_resolved_manifest": "/home/zennakamura/MasterResearch/hsi_water_detection_app/annotations/manifests/wetness_manifest_from_confidence_ali_blocksplit.csv",
+        "deploy_manifest": "/home/zennakamura/MasterResearch/hsi_water_detection_app/annotations/manifests/wetness_manifest_from_confidence_ali_blocksplit.csv"
+      }
+    },
+    {
+      "name": "api_response_matches_deploy_dataset",
+      "ok": true,
+      "detail": {
+        "api_resolved_dataset": "/home/zennakamura/MasterResearch/hsi_water_detection_app/datasets/processed/wetness_pretrain_v3",
+        "deploy_dataset": "/home/zennakamura/MasterResearch/hsi_water_detection_app/datasets/processed/wetness_pretrain_v3"
+      }
+    },
+    {
+      "name": "api_response_matches_deploy_run_name",
+      "ok": true,
+      "detail": {
+        "api_resolved_run_name": "E02_head_only_posw_v3_block224",
+        "deploy_run_name": "E02_head_only_posw_v3_block224"
+      }
+    },
+    {
+      "name": "metadata_matches_api_core_fields",
+      "ok": true,
+      "detail": {
+        "metadata": {
+          "resolved_model_checkpoint": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/model_best.pt",
+          "resolved_temperature_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/temperature_scaling_val.json",
+          "resolved_threshold": 0.327428693347738,
+          "resolved_manifest": "/home/zennakamura/MasterResearch/hsi_water_detection_app/annotations/manifests/wetness_manifest_from_confidence_ali_blocksplit.csv",
+          "resolved_dataset": "/home/zennakamura/MasterResearch/hsi_water_detection_app/datasets/processed/wetness_pretrain_v3",
+          "resolved_run_name": "E02_head_only_posw_v3_block224",
+          "resolved_split_policy": "spatial_block(block_size=224)",
+          "requested_device": "cuda",
+          "executed_device": "cuda"
+        },
+        "api_result": {
+          "resolved_model_checkpoint": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/model_best.pt",
+          "resolved_temperature_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/temperature_scaling_val.json",
+          "resolved_threshold": 0.327428693347738,
+          "resolved_manifest": "/home/zennakamura/MasterResearch/hsi_water_detection_app/annotations/manifests/wetness_manifest_from_confidence_ali_blocksplit.csv",
+          "resolved_dataset": "/home/zennakamura/MasterResearch/hsi_water_detection_app/datasets/processed/wetness_pretrain_v3",
+          "resolved_run_name": "E02_head_only_posw_v3_block224",
+          "resolved_split_policy": "spatial_block(block_size=224)",
+          "requested_device": "cuda",
+          "executed_device": "cuda"
+        }
+      }
+    },
+    {
+      "name": "metadata_provenance_matches_api_provenance",
+      "ok": true,
+      "detail": {
+        "metadata_model_provenance": {
+          "deploy_config_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/configs/deploy/hypersigma_v3_calibrated.json",
+          "deploy_name": "hypersigma_v3_calibrated",
+          "run_name": "E02_head_only_posw_v3_block224",
+          "manifest_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/annotations/manifests/wetness_manifest_from_confidence_ali_blocksplit.csv",
+          "patch_dataset_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/datasets/processed/wetness_pretrain_v3",
+          "model_checkpoint_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/model_best.pt",
+          "spat_checkpoint_path": null,
+          "spec_checkpoint_path": null,
+          "calibration_file_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/temperature_scaling_val.json",
+          "temperature": 28.789190879242685,
+          "threshold": 0.327428693347738,
+          "split_policy": "spatial_block(block_size=224)",
+          "band_count": 170,
+          "reference_models": {
+            "baseline_v3_block224": {
+              "role": "reference_only",
+              "model_type": "baseline_cnn",
+              "model_checkpoint": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/baseline_v3_block224/model_best.pt",
+              "threshold": 0.1166486069560051,
+              "threshold_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/eval_v3/baseline_best_val_threshold.json",
+              "metrics_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/eval_v3/baseline_test_metrics_tuned.json",
+              "notes": "Kept as a calibration-stable reference path; not the GUI default."
+            }
+          }
+        },
+        "api_model_provenance": {
+          "deploy_config_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/configs/deploy/hypersigma_v3_calibrated.json",
+          "deploy_name": "hypersigma_v3_calibrated",
+          "run_name": "E02_head_only_posw_v3_block224",
+          "manifest_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/annotations/manifests/wetness_manifest_from_confidence_ali_blocksplit.csv",
+          "patch_dataset_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/datasets/processed/wetness_pretrain_v3",
+          "model_checkpoint_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/model_best.pt",
+          "spat_checkpoint_path": null,
+          "spec_checkpoint_path": null,
+          "calibration_file_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/temperature_scaling_val.json",
+          "temperature": 28.789190879242685,
+          "threshold": 0.327428693347738,
+          "split_policy": "spatial_block(block_size=224)",
+          "band_count": 170,
+          "reference_models": {
+            "baseline_v3_block224": {
+              "role": "reference_only",
+              "model_type": "baseline_cnn",
+              "model_checkpoint": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/baseline_v3_block224/model_best.pt",
+              "threshold": 0.1166486069560051,
+              "threshold_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/eval_v3/baseline_best_val_threshold.json",
+              "metrics_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/eval_v3/baseline_test_metrics_tuned.json",
+              "notes": "Kept as a calibration-stable reference path; not the GUI default."
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "smoke_test_requested_cuda",
+      "ok": true,
+      "detail": {
+        "requested_device": "cuda"
+      }
+    },
+    {
+      "name": "smoke_test_executed_cuda",
+      "ok": true,
+      "detail": {
+        "executed_device": "cuda",
+        "fallback_reason": null
+      }
+    },
+    {
+      "name": "frontend_contains_model_info_labels",
+      "ok": true,
+      "detail": {
+        "frontend_app_tsx": "/home/zennakamura/MasterResearch/hsi_water_detection_app/frontend/src/App.tsx"
+      }
+    },
+    {
+      "name": "required_output_files_exist",
+      "ok": true,
+      "detail": {
+        "probability_map_png": "/home/zennakamura/MasterResearch/hsi_water_detection_app/outputs/web_ui/2026-04-17_050835/probability_map.png",
+        "probability_overlay_png": "/home/zennakamura/MasterResearch/hsi_water_detection_app/outputs/web_ui/2026-04-17_050835/probability_overlay.png",
+        "spatial_attention_overlay_png": "/home/zennakamura/MasterResearch/hsi_water_detection_app/outputs/web_ui/2026-04-17_050835/spatial_attention_overlay.png",
+        "spectral_attention_png": "/home/zennakamura/MasterResearch/hsi_water_detection_app/outputs/web_ui/2026-04-17_050835/spectral_attention.png",
+        "metadata_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/outputs/web_ui/2026-04-17_050835/metadata.json"
+      }
+    }
+  ],
+  "overall_ok": true
+}

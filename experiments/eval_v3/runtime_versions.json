@@ -1,0 +1,13 @@
+{
+  "python_version": "3.13.5",
+  "torch_version": "2.7.1+cu126",
+  "cuda_version": "12.6",
+  "cuda_is_available": true,
+  "device_count": 1,
+  "device_name_0": "NVIDIA RTX 4500 Ada Generation",
+  "fastapi_version": "0.135.3",
+  "uvicorn_version": "0.44.0",
+  "streamlit_version": "1.56.0",
+  "node_version": "v22.12.0",
+  "npm_version": "10.9.0"
+}

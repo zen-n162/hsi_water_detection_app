@@ -1,5 +1,6 @@
 import argparse
 import json
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -28,6 +29,9 @@ from hsi_water_detection_app.visualization.spatial import (
 )
 from hsi_water_detection_app.visualization.spectral import save_spectral_outputs
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_DEPLOY_CONFIG_PATH = PROJECT_ROOT / "configs" / "deploy" / "hypersigma_v3_calibrated.json"
+
 
 def _safe_float(value: Any, default: float | None = None) -> float | None:
     if value is None:
@@ -51,6 +55,63 @@ def _resolve_temperature(
     return 1.0, None
 
 
+def _resolve_repo_path(path_value: str | None) -> str | None:
+    if not path_value:
+        return None
+    path = Path(path_value)
+    if not path.is_absolute():
+        path = (PROJECT_ROOT / path).resolve()
+    return str(path)
+
+
+def _flag_present(flag: str) -> bool:
+    return flag in sys.argv[1:]
+
+
+def _apply_deploy_config_defaults(args) -> tuple[dict[str, Any] | None, str | None]:
+    if not args.deploy_config:
+        return None, None
+
+    config_path = Path(args.deploy_config)
+    if not config_path.is_absolute():
+        config_path = (PROJECT_ROOT / config_path).resolve()
+    if not config_path.exists():
+        raise FileNotFoundError(f"Deploy config not found: {config_path}")
+
+    deploy_config = json.loads(config_path.read_text(encoding="utf-8"))
+    args.deploy_config = str(config_path)
+
+    if not args.model_checkpoint:
+        args.model_checkpoint = _resolve_repo_path(deploy_config.get("model_checkpoint"))
+    if not args.temperature_json:
+        args.temperature_json = _resolve_repo_path(deploy_config.get("temperature_json"))
+    if args.temperature is None and deploy_config.get("temperature") is not None:
+        args.temperature = float(deploy_config["temperature"])
+    if args.decision_threshold is None and deploy_config.get("threshold") is not None:
+        args.decision_threshold = float(deploy_config["threshold"])
+    if not args.manifest_path:
+        args.manifest_path = _resolve_repo_path(deploy_config.get("manifest_path"))
+    if not args.patch_dataset_path:
+        args.patch_dataset_path = _resolve_repo_path(deploy_config.get("dataset_path"))
+    if not args.split_policy and deploy_config.get("split_policy"):
+        args.split_policy = str(deploy_config["split_policy"])
+    if not args.spat_checkpoint and deploy_config.get("spat_checkpoint"):
+        args.spat_checkpoint = _resolve_repo_path(deploy_config.get("spat_checkpoint"))
+    if not args.spec_checkpoint and deploy_config.get("spec_checkpoint"):
+        args.spec_checkpoint = _resolve_repo_path(deploy_config.get("spec_checkpoint"))
+
+    if not _flag_present("--model_type") and deploy_config.get("model_type"):
+        args.model_type = str(deploy_config["model_type"])
+    if not _flag_present("--patch_size") and deploy_config.get("patch_size") is not None:
+        args.patch_size = int(deploy_config["patch_size"])
+    if not _flag_present("--stride") and deploy_config.get("stride") is not None:
+        args.stride = int(deploy_config["stride"])
+    if args.sensor == "auto" and deploy_config.get("sensor"):
+        args.sensor = str(deploy_config["sensor"])
+
+    return deploy_config, str(config_path)
+
+
 def build_parser():
     parser = argparse.ArgumentParser(
         prog="hsi-water-detect",
@@ -59,6 +120,12 @@ def build_parser():
     parser.add_argument("--input", type=str, required=True, help="Path to input HSI file")
     parser.add_argument("--header", type=str, default=None, help="Optional ENVI header file or wavelength sidecar")
     parser.add_argument("--output_dir", type=str, default=None, help="Optional explicit output directory")
+    parser.add_argument(
+        "--deploy_config",
+        type=str,
+        default=None,
+        help=f"Optional deploy config JSON. Missing inference options are filled from it. Recommended default: {DEFAULT_DEPLOY_CONFIG_PATH}",
+    )
 
     # backward compatible
     parser.add_argument("--model_checkpoint", type=str, default=None, help="Legacy single checkpoint path")
@@ -153,6 +220,7 @@ def build_output_dir(args, sensor: str) -> Path:
 def main():
     parser = build_parser()
     args = parser.parse_args()
+    deploy_config, resolved_deploy_config = _apply_deploy_config_defaults(args)
     resolved_temperature, resolved_temperature_json = _resolve_temperature(
         args.temperature,
         args.temperature_json,
@@ -317,6 +385,9 @@ def main():
     run_config = {
         "input": args.input,
         "header": args.header,
+        "deploy_config": resolved_deploy_config,
+        "deploy_name": None if deploy_config is None else deploy_config.get("deploy_name"),
+        "resolved_run_name": None if deploy_config is None else deploy_config.get("run_name"),
         "model_checkpoint": args.model_checkpoint,
         "spat_checkpoint": args.spat_checkpoint,
         "spec_checkpoint": args.spec_checkpoint,
@@ -331,8 +402,11 @@ def main():
         "patch_size": args.patch_size,
         "stride": args.stride,
         "device": args.device,
+        "requested_device": args.device,
+        "executed_device": getattr(model, "device", args.device),
         "sensor": sensor,
         "model_type": args.model_type,
+        "band_count": None if deploy_config is None else deploy_config.get("band_count"),
         "model_load_info": getattr(model, "load_info", {}),
         "row_start": args.row_start,
         "row_stop": args.row_stop,

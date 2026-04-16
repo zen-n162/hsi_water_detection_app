@@ -2,11 +2,20 @@ from pathlib import Path
 import shutil
 import tempfile
 
-from fastapi import APIRouter, File, Form, UploadFile
+from fastapi import APIRouter, File, Form, Query, UploadFile
 
+from backend.app.services.deploy_config_service import make_deploy_config_response
 from backend.app.services.inference_service import run_inference_pipeline
 
 router = APIRouter()
+
+
+@router.get("/inference/deploy-config")
+def get_inference_deploy_config(
+    deploy_config_path: str | None = Query(default=None),
+):
+    return make_deploy_config_response(deploy_config_path=deploy_config_path)
+
 
 @router.post("/inference/run")
 async def run_inference(
@@ -14,6 +23,7 @@ async def run_inference(
     wavelength_file: UploadFile | None = File(default=None),
     sensor: str = Form("auto"),
     device: str = Form("cpu"),
+    deploy_config_path: str | None = Form(default=None),
 
     # legacy
     model_checkpoint: str | None = Form(default=None),
@@ -28,9 +38,9 @@ async def run_inference(
     spat_checkpoint: str | None = Form(default=None),
     spec_checkpoint: str | None = Form(default=None),
 
-    model_type: str = Form("ss"),
-    patch_size: int = Form(64),
-    stride: int = Form(32),
+    model_type: str | None = Form(default=None),
+    patch_size: int | None = Form(default=None),
+    stride: int | None = Form(default=None),
     row_start: int | None = Form(default=None),
     row_stop: int | None = Form(default=None),
     col_start: int | None = Form(default=None),
@@ -58,6 +68,7 @@ async def run_inference(
             header_path=str(wavelength_path) if wavelength_path else None,
             sensor=sensor,
             device=device,
+            deploy_config_path=deploy_config_path,
             model_checkpoint=model_checkpoint,
             spat_checkpoint=spat_checkpoint,
             spec_checkpoint=spec_checkpoint,

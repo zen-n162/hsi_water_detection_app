@@ -68,6 +68,8 @@ experiments/eval_v3/_tmp_block_*.audit.json
 # local scratch files
 run_hypersigma_finetune_grid.sh
 sprint2_checklist.txt
+F 9648533994Aizu
+F 9648533994Aizu.pub
 
 # generated outputs
 outputs/

@@ -1,0 +1,23 @@
+{
+  "release_name": "hypersigma_v3_calibrated_production_candidate",
+  "created_at": "2026-04-17T05:09:13",
+  "manifest_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/annotations/manifests/wetness_manifest_from_confidence_ali_blocksplit.csv",
+  "dataset_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/datasets/processed/wetness_pretrain_v3",
+  "model_checkpoint": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/model_best.pt",
+  "temperature_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/runs_v3/E02_head_only_posw_v3_block224/temperature_scaling_val.json",
+  "threshold": 0.327428693347738,
+  "run_name": "E02_head_only_posw_v3_block224",
+  "git_commit_hash": "de495cd257d2209dd64c4de76a2a423fd7968b58",
+  "git_worktree_dirty": true,
+  "deploy_config_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/configs/deploy/hypersigma_v3_calibrated.json",
+  "gui_entrypoint": "frontend/src/App.tsx",
+  "backend_entrypoint": "backend.app.main:app",
+  "backend_routes": {
+    "deploy_config": "GET /inference/deploy-config",
+    "run_inference": "POST /inference/run"
+  },
+  "smoke_result_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/eval_v3/gui_smoke_test_result.json",
+  "acceptance_result_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/eval_v3/gui_acceptance_result.json",
+  "deploy_consistency_audit_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/eval_v3/deploy_consistency_audit.json",
+  "cuda_runtime_check_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/eval_v3/cuda_runtime_check.json"
+}
