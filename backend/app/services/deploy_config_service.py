@@ -4,15 +4,16 @@ import json
 from pathlib import Path
 from typing import Any
 
+from backend.app.settings import get_settings
+
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_DEPLOY_CONFIG_RELATIVE = "configs/deploy/hypersigma_v3_calibrated.json"
-DEFAULT_DEPLOY_CONFIG_PATH = PROJECT_ROOT / DEFAULT_DEPLOY_CONFIG_RELATIVE
 
 _TOP_LEVEL_PATH_KEYS = {
     "manifest_path",
     "dataset_path",
     "model_checkpoint",
     "temperature_json",
+    "output_root",
     "created_from_summary_path",
 }
 _CREATED_FROM_PATH_KEYS = {
@@ -51,7 +52,8 @@ def _load_json(path: Path) -> dict[str, Any]:
 
 
 def load_deploy_config_bundle(deploy_config_path: str | None = None) -> dict[str, Any]:
-    config_path = Path(deploy_config_path) if deploy_config_path else DEFAULT_DEPLOY_CONFIG_PATH
+    settings = get_settings()
+    config_path = Path(deploy_config_path) if deploy_config_path else settings.default_deploy_config
     if not config_path.is_absolute():
         config_path = (PROJECT_ROOT / config_path).resolve()
     if not config_path.exists():
@@ -74,21 +76,56 @@ def load_deploy_config_bundle(deploy_config_path: str | None = None) -> dict[str
             for name, model_cfg in reference_models.items()
         }
 
+    runtime_overrides: dict[str, Any] = {}
+    if settings.model_checkpoint_override:
+        resolved["model_checkpoint"] = _resolve_project_path(settings.model_checkpoint_override)
+        runtime_overrides["model_checkpoint"] = resolved["model_checkpoint"]
+    if settings.temperature_json_override:
+        resolved["temperature_json"] = _resolve_project_path(settings.temperature_json_override)
+        runtime_overrides["temperature_json"] = resolved["temperature_json"]
+    if settings.threshold_override is not None:
+        resolved["threshold"] = settings.threshold_override
+        runtime_overrides["threshold"] = settings.threshold_override
+    if settings.manifest_path_override:
+        resolved["manifest_path"] = _resolve_project_path(settings.manifest_path_override)
+        runtime_overrides["manifest_path"] = resolved["manifest_path"]
+    if settings.dataset_path_override:
+        resolved["dataset_path"] = _resolve_project_path(settings.dataset_path_override)
+        runtime_overrides["dataset_path"] = resolved["dataset_path"]
+    if "output_root" not in resolved:
+        resolved["output_root"] = str(settings.output_root)
+    runtime_overrides["output_root"] = str(settings.output_root)
+
     return {
         "deploy_config_path": str(config_path),
-        "deploy_config_relative": str(config_path.relative_to(PROJECT_ROOT)),
+        "deploy_config_relative": (
+            str(config_path.relative_to(PROJECT_ROOT))
+            if config_path.is_relative_to(PROJECT_ROOT)
+            else str(config_path)
+        ),
         "deploy_config": raw,
         "resolved": resolved,
+        "runtime_overrides": runtime_overrides,
     }
 
 
 def make_deploy_config_response(deploy_config_path: str | None = None) -> dict[str, Any]:
     bundle = load_deploy_config_bundle(deploy_config_path=deploy_config_path)
     resolved = bundle["resolved"]
+    settings = get_settings()
     return {
         "deploy_config_path": bundle["deploy_config_path"],
         "deploy_config_relative": bundle["deploy_config_relative"],
         "deploy_config": bundle["deploy_config"],
         "resolved": resolved,
         "reference_models": resolved.get("reference_models", {}),
+        "runtime_overrides": bundle.get("runtime_overrides", {}),
+        "runtime": {
+            "app_mode": settings.app_mode,
+            "runtime_root": str(settings.runtime_root),
+            "allow_server_file_paths": settings.allow_server_file_paths,
+            "allow_deploy_config_override": settings.allow_deploy_config_override,
+            "output_root": str(settings.output_root),
+            "output_url_prefix": settings.output_url_prefix,
+        },
     }

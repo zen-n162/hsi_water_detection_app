@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: hsi-water-detection-api
+    runtime: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: PYTHONPATH=src:. uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: HSI_APP_MODE
+        value: public
+      - key: HSI_RUNTIME_ROOT
+        value: runtime
+      - key: HSI_DEPLOY_CONFIG
+        value: configs/deploy/hypersigma_v3_calibrated_web.json
+      - key: HSI_OUTPUT_ROOT
+        value: runtime/outputs
+      - key: HSI_OUTPUT_URL_PREFIX
+        value: /outputs
+      - key: HSI_ALLOW_SERVER_FILE_PATHS
+        value: "false"
+      - key: HSI_ALLOW_DEPLOY_CONFIG_OVERRIDE
+        value: "false"
+      - key: HSI_INFERENCE_RUNTIME
+        value: current
+      - key: HSI_CORS_ALLOW_ORIGINS
+        sync: false
+      - key: HYPERSIGMA_ROOT
+        value: runtime/assets/upstream/HyperSIGMA
+      - key: HYPERSIGMA_SPAT_CHECKPOINT
+        value: runtime/assets/upstream/HyperSIGMA/HyperspectralDetection/spat-vit-b-checkpoint-1599.pth
+      - key: HYPERSIGMA_SPEC_CHECKPOINT
+        value: runtime/assets/upstream/HyperSIGMA/HyperspectralDetection/spec-vit-b-checkpoint-1599.pth
+    disk:
+      name: runtime
+      mountPath: /opt/render/project/src/runtime
+      sizeGB: 5

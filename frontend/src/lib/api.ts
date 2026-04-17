@@ -1,17 +1,99 @@
-const API_BASE = 'http://127.0.0.1:8000';
+import { runtimeConfig } from './runtime';
+
+const API_BASE = runtimeConfig.apiBaseUrl;
 
 function withBase(url?: string | null): string | undefined {
   if (!url) return undefined;
   if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  if (!API_BASE) return url.startsWith('/') ? url : `/${url}`;
   if (url.startsWith('/')) return `${API_BASE}${url}`;
   return `${API_BASE}/${url}`;
 }
 
+function toApiUrl(path: string): string {
+  return withBase(path) || path;
+}
+
 function pickFirst<T>(...values: (T | undefined | null)[]): T | undefined {
-  for (const v of values) {
-    if (v !== undefined && v !== null) return v;
+  for (const value of values) {
+    if (value !== undefined && value !== null) return value;
   }
   return undefined;
+}
+
+function stringifyDetail(value: unknown, fallback: string): string {
+  if (typeof value === 'string' && value.trim()) return value;
+  if (value && typeof value === 'object') {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return fallback;
+    }
+  }
+  return fallback;
+}
+
+async function parseBody(response: Response): Promise<any> {
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    try {
+      return await response.json();
+    } catch {
+      return undefined;
+    }
+  }
+
+  const text = await response.text();
+  return text ? { detail: text } : undefined;
+}
+
+export class ApiError extends Error {
+  status?: number;
+  hint?: string;
+  code?: string;
+  raw?: unknown;
+
+  constructor(message: string, options?: { status?: number; hint?: string; code?: string; raw?: unknown }) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = options?.status;
+    this.hint = options?.hint;
+    this.code = options?.code;
+    this.raw = options?.raw;
+  }
+}
+
+async function requestJson(path: string, init: RequestInit, fallbackMessage: string): Promise<any> {
+  const response = await fetch(toApiUrl(path), init);
+  const body = await parseBody(response);
+
+  if (!response.ok || body?.ok === false) {
+    const message = stringifyDetail(
+      pickFirst(body?.detail, body?.stderr, body?.message),
+      fallbackMessage
+    );
+    throw new ApiError(message, {
+      status: response.status,
+      hint: typeof body?.hint === 'string' ? body.hint : undefined,
+      code: typeof body?.code === 'string' ? body.code : undefined,
+      raw: body,
+    });
+  }
+
+  return body;
+}
+
+function buildFormData(obj: Record<string, any>): FormData {
+  const fd = new FormData();
+  Object.entries(obj).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') return;
+    if (value instanceof File) {
+      fd.append(key, value);
+    } else {
+      fd.append(key, String(value));
+    }
+  });
+  return fd;
 }
 
 export type PreviewRequest = {
@@ -72,6 +154,7 @@ export type InferenceResponse = {
   resolvedManifest?: string;
   resolvedDataset?: string;
   resolvedSplitPolicy?: string;
+  resolvedOutputRoot?: string;
   executedDevice?: string;
   requestedDevice?: string;
 
@@ -80,17 +163,39 @@ export type InferenceResponse = {
   raw: any;
 };
 
-function buildFormData(obj: Record<string, any>): FormData {
-  const fd = new FormData();
-  Object.entries(obj).forEach(([k, v]) => {
-    if (v === undefined || v === null || v === '') return;
-    if (v instanceof File) {
-      fd.append(k, v);
-    } else {
-      fd.append(k, String(v));
-    }
-  });
-  return fd;
+export type DeployConfigResponse = {
+  deployConfigPath?: string;
+  deployConfigRelative?: string;
+  deployConfig?: any;
+  resolved: Record<string, any>;
+  referenceModels?: Record<string, any>;
+  runtime?: {
+    app_mode?: string;
+    allow_server_file_paths?: boolean;
+    allow_deploy_config_override?: boolean;
+    output_root?: string;
+    output_url_prefix?: string;
+  };
+};
+
+export async function loadDeployConfig(deployConfigPath?: string): Promise<DeployConfigResponse> {
+  const query = deployConfigPath
+    ? `?deploy_config_path=${encodeURIComponent(deployConfigPath)}`
+    : '';
+  const json = await requestJson(
+    `/inference/deploy-config${query}`,
+    { method: 'GET' },
+    'Failed to load deploy configuration.'
+  );
+
+  return {
+    deployConfigPath: json.deploy_config_path,
+    deployConfigRelative: json.deploy_config_relative,
+    deployConfig: json.deploy_config,
+    resolved: json.resolved || {},
+    referenceModels: json.reference_models || {},
+    runtime: json.runtime || {},
+  };
 }
 
 export async function loadPreview(req: PreviewRequest): Promise<PreviewResponse> {
@@ -106,15 +211,14 @@ export async function loadPreview(req: PreviewRequest): Promise<PreviewResponse>
     preview_wavelength: req.preview_wavelength,
   });
 
-  const res = await fetch(`${API_BASE}/preview/grayscale`, {
-    method: 'POST',
-    body: fd,
-  });
-
-  const json = await res.json();
-  if (!res.ok || json?.ok === false) {
-    throw new Error(json?.detail || json?.stderr || 'Failed to load preview.');
-  }
+  const json = await requestJson(
+    '/preview/grayscale',
+    {
+      method: 'POST',
+      body: fd,
+    },
+    'Failed to load preview.'
+  );
 
   const grayscalePreviewUrl = withBase(
     pickFirst(
@@ -156,19 +260,17 @@ export async function runInference(req: InferenceRequest): Promise<InferenceResp
     col_stop: req.col_stop,
   });
 
-  const res = await fetch(`${API_BASE}/inference/run`, {
-    method: 'POST',
-    body: fd,
-  });
-
-  const json = await res.json();
-  if (!res.ok || json?.ok === false) {
-    throw new Error(json?.detail || json?.stderr || 'Failed to run inference.');
-  }
+  const json = await requestJson(
+    '/inference/run',
+    {
+      method: 'POST',
+      body: fd,
+    },
+    'Failed to run inference.'
+  );
 
   return {
     ok: Boolean(json.ok ?? true),
-
     pseudocolorUrl: withBase(
       pickFirst(json.pseudocolor_url, json.urls?.pseudocolor_png)
     ),
@@ -193,7 +295,6 @@ export async function runInference(req: InferenceRequest): Promise<InferenceResp
     metadataUrl: withBase(
       pickFirst(json.metadata_url, json.urls?.metadata_json)
     ),
-
     resolvedRunName: json.resolved_run_name,
     resolvedModelCheckpoint: json.resolved_model_checkpoint,
     resolvedTemperatureJson: json.resolved_temperature_json,
@@ -201,9 +302,9 @@ export async function runInference(req: InferenceRequest): Promise<InferenceResp
     resolvedManifest: json.resolved_manifest,
     resolvedDataset: json.resolved_dataset,
     resolvedSplitPolicy: json.resolved_split_policy,
+    resolvedOutputRoot: json.resolved_output_root,
     executedDevice: json.executed_device,
     requestedDevice: json.requested_device,
-
     stdout: json.stdout,
     stderr: json.stderr,
     raw: json,

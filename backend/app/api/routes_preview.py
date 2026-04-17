@@ -7,8 +7,10 @@ from pathlib import Path
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
 from backend.app.services.preview_service import build_grayscale_preview
+from backend.app.settings import get_settings
 
 router = APIRouter()
+settings = get_settings()
 
 
 @router.post("/preview/grayscale")
@@ -45,6 +47,8 @@ async def preview_grayscale(
 
     # case 1: use existing server-side path
     if input_path:
+        if not settings.allow_server_file_paths:
+            raise PermissionError("input_path is disabled in public mode. Upload the HSI file instead.")
         input_path_obj = Path(input_path)
         if not input_path_obj.exists():
             raise HTTPException(status_code=400, detail=f"input_path not found: {input_path}")

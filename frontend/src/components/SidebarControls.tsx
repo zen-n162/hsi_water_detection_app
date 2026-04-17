@@ -1,4 +1,13 @@
+import type { AppMode } from '../lib/runtime';
+
 type Props = {
+  appMode: AppMode;
+  deviceOptions: string[];
+  showServerPathInputs: boolean;
+  showDeployConfigInput: boolean;
+  showAdvancedOverrides: boolean;
+  loadingDeployConfig: boolean;
+  deployConfigSummary: string;
   sensor: string;
   setSensor: (v: string) => void;
   device: string;
@@ -35,6 +44,11 @@ type Props = {
 };
 
 export default function SidebarControls(props: Props) {
+  const runtimeNote =
+    props.appMode === 'public'
+      ? 'Public mode is upload-first. Server-side file paths and deploy profile overrides are hidden by default.'
+      : 'Local mode keeps server-side paths and deploy profile overrides available for development.';
+
   return (
     <div className="sidebar-controls">
       <div className="sidebar-nav">
@@ -55,23 +69,35 @@ export default function SidebarControls(props: Props) {
         </button>
       </div>
 
+      <div className="runtime-note">{runtimeNote}</div>
+
+      {props.showServerPathInputs ? (
+        <label className="field">
+          <span>HSI file path</span>
+          <input
+            value={props.inputPath}
+            onChange={(e) => props.setInputPath(e.target.value)}
+            placeholder="/path/to/input.tif"
+          />
+        </label>
+      ) : null}
+
       <label className="field">
-        <span>HSI file path</span>
+        <span>HSI file upload</span>
         <input
-          value={props.inputPath}
-          onChange={(e) => props.setInputPath(e.target.value)}
-          placeholder="/path/to/input.tif"
+          type="file"
+          accept=".tif,.tiff,.img"
+          onChange={(e) => props.setHsiFile(e.target.files?.[0] || null)}
         />
       </label>
 
       <label className="field">
-        <span>HSI file upload</span>
-        <input type="file" accept=".tif,.tiff,.img" onChange={(e) => props.setHsiFile(e.target.files?.[0] || null)} />
-      </label>
-
-      <label className="field">
         <span>Wavelength sidecar</span>
-        <input type="file" accept=".json,.txt,.csv" onChange={(e) => props.setWavelengthFile(e.target.files?.[0] || null)} />
+        <input
+          type="file"
+          accept=".json,.txt,.csv"
+          onChange={(e) => props.setWavelengthFile(e.target.files?.[0] || null)}
+        />
       </label>
 
       <label className="field">
@@ -84,8 +110,11 @@ export default function SidebarControls(props: Props) {
       <label className="field">
         <span>Device</span>
         <select value={props.device} onChange={(e) => props.setDevice(e.target.value)}>
-          <option value="cuda">cuda</option>
-          <option value="cpu">cpu</option>
+          {props.deviceOptions.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
         </select>
       </label>
 
@@ -97,39 +126,48 @@ export default function SidebarControls(props: Props) {
         </select>
       </label>
 
-      <label className="field">
-        <span>Deploy config</span>
-        <input value={props.deployConfigPath} onChange={(e) => props.setDeployConfigPath(e.target.value)} />
-      </label>
-
-      <details className="collapse">
-        <summary>Advanced overrides</summary>
-
+      {props.showDeployConfigInput ? (
         <label className="field">
-          <span>Fine-tuned model checkpoint</span>
-          <input value={props.modelCheckpoint} onChange={(e) => props.setModelCheckpoint(e.target.value)} />
+          <span>Deploy config</span>
+          <input value={props.deployConfigPath} onChange={(e) => props.setDeployConfigPath(e.target.value)} />
         </label>
+      ) : (
+        <div className="field-note">
+          <strong>Deploy profile:</strong>{' '}
+          {props.loadingDeployConfig ? 'loading...' : props.deployConfigSummary}
+        </div>
+      )}
 
-        <label className="field">
-          <span>Calibration JSON override</span>
-          <input value={props.temperatureJson} onChange={(e) => props.setTemperatureJson(e.target.value)} />
-        </label>
+      {props.showAdvancedOverrides ? (
+        <details className="collapse">
+          <summary>Advanced overrides</summary>
 
-        <label className="field">
-          <span>Decision threshold override</span>
-          <input value={props.threshold} onChange={(e) => props.setThreshold(e.target.value)} />
-        </label>
+          <label className="field">
+            <span>Fine-tuned model checkpoint</span>
+            <input value={props.modelCheckpoint} onChange={(e) => props.setModelCheckpoint(e.target.value)} />
+          </label>
 
-        <label className="field">
-          <span>Preview band index</span>
-          <input value={props.previewBandIndex} onChange={(e) => props.setPreviewBandIndex(e.target.value)} />
-        </label>
+          <label className="field">
+            <span>Calibration JSON override</span>
+            <input value={props.temperatureJson} onChange={(e) => props.setTemperatureJson(e.target.value)} />
+          </label>
 
-        <label className="field">
-          <span>Preview wavelength</span>
-          <input value={props.previewWavelength} onChange={(e) => props.setPreviewWavelength(e.target.value)} />
-        </label>
-      </details>
+          <label className="field">
+            <span>Decision threshold override</span>
+            <input value={props.threshold} onChange={(e) => props.setThreshold(e.target.value)} />
+          </label>
+
+          <label className="field">
+            <span>Preview band index</span>
+            <input value={props.previewBandIndex} onChange={(e) => props.setPreviewBandIndex(e.target.value)} />
+          </label>
+
+          <label className="field">
+            <span>Preview wavelength</span>
+            <input value={props.previewWavelength} onChange={(e) => props.setPreviewWavelength(e.target.value)} />
+          </label>
+        </details>
+      ) : null}
 
       <div className="action-stack">
         <button onClick={props.onLoadPreview} disabled={props.busyPreview} type="button">

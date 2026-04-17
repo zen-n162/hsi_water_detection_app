@@ -4,6 +4,9 @@ __pycache__/
 *.pyd
 .ipynb_checkpoints/
 .env
+.env.local
+.env.production.local
+.env.development.local
 .venv/
 venv/
 dist/
@@ -21,33 +24,12 @@ data/processed/*
 models/checkpoints/*
 !models/checkpoints/.gitkeep
 
-results/
 logs/
 
-results/
-results_real/
-
-results/
-results_real/
-
 # generated outputs
 outputs/
 results/
-results_real/
-results_real_model/
-results_roi/
-results_roi_bounds/
-results_roi_test/
-
-# generated outputs
-outputs/
-results/
-results_real/
-results_real_model/
-results_roi/
-results_roi_bounds/
-results_roi_test/
-results_roi_bounds_adapter/
+results_*/
 
 # generated wetness datasets and temp exports
 datasets/processed/
@@ -68,15 +50,11 @@ experiments/eval_v3/_tmp_block_*.audit.json
 # local scratch files
 run_hypersigma_finetune_grid.sh
 sprint2_checklist.txt
+zen-n162
+zen-n162.pub
 F 9648533994Aizu
 F 9648533994Aizu.pub
-
-# generated outputs
-outputs/
-results/
-results_real/
-results_real_model/
-results_roi/
-results_roi_bounds/
-results_roi_test/
-results_roi_bounds_adapter/
+frontend/.env.local
+frontend/.env.production.local
+backend/.env
+backend/.env.local

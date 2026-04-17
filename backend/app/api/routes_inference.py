@@ -8,14 +8,27 @@ from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
 
 from backend.app.services.deploy_config_service import make_deploy_config_response
 from backend.app.services.inference_service import run_inference_pipeline
+from backend.app.settings import get_settings
 
 router = APIRouter()
+settings = get_settings()
+
+
+def _ensure_path_override_allowed(value: str | None, *, field_name: str):
+    if value and not settings.allow_server_file_paths:
+        raise PermissionError(f"{field_name} is disabled in public mode.")
+
+
+def _ensure_deploy_config_override_allowed(value: str | None):
+    if value and not settings.allow_deploy_config_override:
+        raise PermissionError("deploy_config_path override is disabled in public mode.")
 
 
 @router.get("/inference/deploy-config")
 def get_inference_deploy_config(
     deploy_config_path: str | None = Query(default=None),
 ):
+    _ensure_deploy_config_override_allowed(deploy_config_path)
     return make_deploy_config_response(deploy_config_path=deploy_config_path)
 
 
@@ -60,6 +73,14 @@ async def run_inference(
     ymax: float | None = Form(default=None),
 ):
     effective_threshold = decision_threshold if decision_threshold is not None else threshold
+    _ensure_deploy_config_override_allowed(deploy_config_path)
+    _ensure_path_override_allowed(input_path, field_name="input_path")
+    _ensure_path_override_allowed(model_checkpoint, field_name="model_checkpoint")
+    _ensure_path_override_allowed(temperature_json, field_name="temperature_json")
+    _ensure_path_override_allowed(manifest_path, field_name="manifest_path")
+    _ensure_path_override_allowed(patch_dataset_path, field_name="patch_dataset_path")
+    _ensure_path_override_allowed(spat_checkpoint, field_name="spat_checkpoint")
+    _ensure_path_override_allowed(spec_checkpoint, field_name="spec_checkpoint")
 
     # 1) server-side path input
     if input_path:

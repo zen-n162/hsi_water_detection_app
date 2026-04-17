@@ -107,6 +107,18 @@ input, select {
   font-size: 13px;
 }
 
+.runtime-note,
+.field-note {
+  border: 1px solid #394154;
+  background: rgba(20, 28, 44, 0.72);
+  border-radius: 10px;
+  color: #c6d1e2;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+
 .collapse {
   padding: 12px;
 }
@@ -125,6 +137,16 @@ input, select {
 .error-box {
   padding: 12px;
   color: #ffb4b4;
+}
+
+.error-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.error-hint {
+  margin-top: 8px;
+  color: #ffd8b4;
 }
 
 .model-info {

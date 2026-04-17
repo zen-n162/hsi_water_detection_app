@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -14,14 +15,15 @@ from backend.app.services.preview_service import (
     make_probability_png,
     make_pseudocolor_png_from_cube,
 )
+from backend.app.settings import get_settings
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_INFERENCE_CONDA_ENV = "HyperSIGMA"
 
 
 def to_public_url(path: Path) -> str:
-    rel = path.resolve().relative_to(PROJECT_ROOT.resolve())
-    return f"/{rel.as_posix()}"
+    settings = get_settings()
+    rel = path.resolve().relative_to(settings.output_root.resolve())
+    return f"{settings.output_url_prefix}/{rel.as_posix()}"
 
 
 def _resolve_optional_path(p: str | None) -> str | None:
@@ -50,10 +52,12 @@ def _load_json_if_exists(path: Path) -> dict[str, Any]:
 
 
 def _build_python_command() -> list[str]:
-    conda_env = os.environ.get("HSI_INFERENCE_CONDA_ENV", DEFAULT_INFERENCE_CONDA_ENV).strip()
-    if conda_env:
-        return ["conda", "run", "-n", conda_env, "python"]
-    return ["python"]
+    settings = get_settings()
+    if settings.inference_python_bin:
+        return [settings.inference_python_bin]
+    if settings.inference_runtime == "conda":
+        return ["conda", "run", "-n", settings.inference_conda_env, "python"]
+    return [sys.executable]
 
 
 def _first_non_none(*values):
@@ -95,7 +99,8 @@ def run_inference_pipeline(
     xmax: float | None = None,
     ymax: float | None = None,
 ) -> dict[str, Any]:
-    output_dir = PROJECT_ROOT / "outputs" / "web_ui" / datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    settings = get_settings()
+    output_dir = settings.output_root / "web_ui" / datetime.now().strftime("%Y-%m-%d_%H%M%S_%f")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     deploy_bundle = load_deploy_config_bundle(deploy_config_path=deploy_config_path)
@@ -185,6 +190,8 @@ def run_inference_pipeline(
 
     env = dict(os.environ)
     env["PYTHONPATH"] = "src:."
+    env.setdefault("MPLCONFIGDIR", "/tmp/matplotlib")
+    env.setdefault("XDG_CACHE_HOME", "/tmp/xdg-cache")
 
     proc = subprocess.run(
         cmd,
@@ -282,6 +289,7 @@ def run_inference_pipeline(
         "stdout": proc.stdout,
         "stderr": proc.stderr,
         "output_dir": str(output_dir),
+        "resolved_output_root": str(settings.output_root),
         "deploy_config_path": deploy_config_path_resolved,
         "resolved_deploy_config_path": deploy_config_path_resolved,
         "resolved_model_checkpoint": resolved_model_checkpoint,
@@ -320,6 +328,7 @@ def run_inference_pipeline(
         "deploy_config_path": deploy_config_path_resolved,
         "deploy_name": deploy_resolved.get("deploy_name"),
         "run_name": resolved_run_name,
+        "output_root": str(settings.output_root),
         "manifest_path": resolved_manifest_path,
         "patch_dataset_path": resolved_patch_dataset_path,
         "model_checkpoint_path": resolved_model_checkpoint,
@@ -353,6 +362,7 @@ def run_inference_pipeline(
         "resolved_model_type": result["resolved_model_type"],
         "resolved_patch_size": result["resolved_patch_size"],
         "resolved_stride": result["resolved_stride"],
+        "resolved_output_root": result["resolved_output_root"],
         "requested_device": result["requested_device"],
         "executed_device": result["executed_device"],
         "model_provenance": result["model_provenance"],

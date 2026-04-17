@@ -1,13 +1,18 @@
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib")
+os.environ.setdefault("XDG_CACHE_HOME", "/tmp/xdg-cache")
+
 import matplotlib.pyplot as plt
 import numpy as np
 
+from backend.app.settings import get_settings
 from hsi_water_detection_app.config import HYPERION_BAD_BANDS_0BASED
 from hsi_water_detection_app.data.loader import (
     load_hsi_bounds,
@@ -20,15 +25,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
 def to_public_url(path: Path) -> str:
-    """
-    Convert local output path into backend-served relative URL.
-
-    Example:
-      /project/outputs/preview_ui/xxx/grayscale_preview.png
-        -> /outputs/preview_ui/xxx/grayscale_preview.png
-    """
-    rel = path.relative_to(PROJECT_ROOT)
-    return f"/{rel.as_posix()}"
+    settings = get_settings()
+    rel = path.resolve().relative_to(settings.output_root.resolve())
+    return f"{settings.output_url_prefix}/{rel.as_posix()}"
 
 
 def _normalize01(arr: np.ndarray) -> np.ndarray:
@@ -299,7 +298,8 @@ def build_grayscale_preview(
 
     band_img = _stretch_band(cube[band_idx])
 
-    outdir = PROJECT_ROOT / "outputs" / "preview_ui" / datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    settings = get_settings()
+    outdir = settings.output_root / "preview_ui" / datetime.now().strftime("%Y-%m-%d_%H%M%S_%f")
     outdir.mkdir(parents=True, exist_ok=True)
 
     png_path = outdir / "grayscale_preview.png"

@@ -1,0 +1,39 @@
+{
+  "deploy_name": "hypersigma_v3_calibrated_web",
+  "deploy_config_version": 2,
+  "runtime_profile": "web_public",
+  "run_name": "E02_head_only_posw_v3_block224",
+  "asset_root": "runtime/assets",
+  "output_root": "runtime/outputs",
+  "manifest_path": "runtime/assets/manifests/wetness_manifest_from_confidence_ali_blocksplit.csv",
+  "dataset_path": "runtime/assets/datasets/wetness_pretrain_v3_minimal",
+  "model_type": "ss",
+  "model_checkpoint": "runtime/assets/models/E02_head_only_posw_v3_block224/model_best.pt",
+  "temperature_json": "runtime/assets/models/E02_head_only_posw_v3_block224/temperature_scaling_val.json",
+  "threshold": 0.327428693347738,
+  "patch_size": 64,
+  "stride": 32,
+  "band_count": 170,
+  "sensor": "hyperion",
+  "split_policy": "spatial_block(block_size=224)",
+  "created_from_summary_path": "experiments/eval_v3/pipeline_summary.json",
+  "created_from": {
+    "pipeline_summary": "experiments/eval_v3/pipeline_summary.json",
+    "best_run_selection": "experiments/eval_v3/best_run_selection.json",
+    "gui_default_recommendation": "experiments/eval_v3/gui_default_recommendation.json",
+    "leakage_comparison": "experiments/eval_v3/leakage_comparison.json",
+    "artifacts_manifest": "experiments/eval_v3/artifacts_manifest.json"
+  },
+  "notes": "Public web deployment profile. Runtime inference assets, calibration JSON, manifest, and minimal provenance dataset pointer resolve from runtime/assets so Render disk contents stay the single operational source of truth.",
+  "reference_models": {
+    "baseline_v3_block224": {
+      "role": "reference_only",
+      "model_type": "baseline_cnn",
+      "model_checkpoint": "runtime/assets/models/baseline_v3_block224/model_best.pt",
+      "threshold": 0.1166486069560051,
+      "threshold_json": "experiments/eval_v3/baseline_best_val_threshold.json",
+      "metrics_json": "experiments/eval_v3/baseline_test_metrics_tuned.json",
+      "notes": "Kept as a lightweight CPU-friendly reference artifact; not the default public deploy path."
+    }
+  }
+}
