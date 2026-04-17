@@ -12,6 +12,7 @@ os.environ.setdefault("XDG_CACHE_HOME", "/tmp/xdg-cache")
 import matplotlib.pyplot as plt
 import numpy as np
 
+from backend.app.services.deploy_config_service import load_deploy_config_bundle, to_safe_path_label
 from backend.app.settings import get_settings
 from hsi_water_detection_app.config import HYPERION_BAD_BANDS_0BASED
 from hsi_water_detection_app.data.loader import (
@@ -27,7 +28,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 def to_public_url(path: Path) -> str:
     settings = get_settings()
     rel = path.resolve().relative_to(settings.output_root.resolve())
-    return f"{settings.output_url_prefix}/{rel.as_posix()}"
+    public_path = f"{settings.output_url_prefix}/{rel.as_posix()}"
+    if settings.public_base_url:
+        return f"{settings.public_base_url}{public_path}"
+    return public_path
 
 
 def _normalize01(arr: np.ndarray) -> np.ndarray:
@@ -263,6 +267,11 @@ def build_grayscale_preview(
     xmax: float | None,
     ymax: float | None,
 ):
+    settings = get_settings()
+    if settings.is_external_web_mode:
+        deploy_bundle = load_deploy_config_bundle()
+        sensor = str(deploy_bundle["resolved"].get("sensor") or sensor)
+
     sensor = _infer_sensor(sensor, input_path)
 
     cube, meta = _load_cube_and_meta(
@@ -298,8 +307,8 @@ def build_grayscale_preview(
 
     band_img = _stretch_band(cube[band_idx])
 
-    settings = get_settings()
-    outdir = settings.output_root / "preview_ui" / datetime.now().strftime("%Y-%m-%d_%H%M%S_%f")
+    preview_root = settings.output_root if settings.output_root.name == "preview_ui" else settings.output_root / "preview_ui"
+    outdir = preview_root / datetime.now().strftime("%Y-%m-%d_%H%M%S_%f")
     outdir.mkdir(parents=True, exist_ok=True)
 
     png_path = outdir / "grayscale_preview.png"
@@ -310,7 +319,6 @@ def build_grayscale_preview(
     result = {
         "ok": True,
         "sensor": sensor,
-        "input_path": str(input_path),
         "preview_band_index": int(band_idx),
         "preview_band": int(band_idx),  # 互換用
         "preview_wavelength_nm": band_wavelength,
@@ -325,13 +333,6 @@ def build_grayscale_preview(
         "grayscale_preview_url": public_png_url,
         "preview_url": public_png_url,
         "grayscale_url": public_png_url,
-
-        "files": {
-            "grayscale_preview_png": str(png_path),
-        },
-        "urls": {
-            "grayscale_preview_png": public_png_url,
-        },
         "meta": {
             "crs": meta.get("crs"),
             "transform": meta.get("transform"),
@@ -339,9 +340,20 @@ def build_grayscale_preview(
         },
     }
 
-    (outdir / "preview_result.json").write_text(
-        json.dumps(result, indent=2, ensure_ascii=False),
-        encoding="utf-8",
-    )
+    if not settings.is_external_web_mode:
+        result["input_path"] = str(input_path)
+        result["output_dir"] = str(outdir)
+        result["files"] = {
+            "grayscale_preview_png": str(png_path),
+        }
+        result["urls"] = {
+            "grayscale_preview_png": public_png_url,
+        }
+        (outdir / "preview_result.json").write_text(
+            json.dumps(result, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+    else:
+        result["output_dir"] = to_safe_path_label(outdir)
 
     return result

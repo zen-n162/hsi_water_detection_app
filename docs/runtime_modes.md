@@ -1,6 +1,6 @@
 # Runtime Modes
 
-This repository now distinguishes three runtime modes so that research freeze work and public web deployment do not step on each other.
+This repository now distinguishes four runtime modes so that research freeze work, local GPU web demos, and older public web experiments do not step on each other.
 
 ## 1. `local-research`
 
@@ -41,7 +41,33 @@ Characteristics:
 - backend may accept `input_path` and path overrides
 - outputs are stored under `outputs/`
 
-## 3. `public-web`
+## 3. `local-gpu-web`
+
+Purpose:
+
+- Netlify frontend + tunnel-exposed backend on the owner-operated research PC
+- GPU inference with local frozen assets kept on the PC
+- public-safe provenance for external users
+
+Recommended settings:
+
+- `HSI_APP_MODE=local_gpu_web`
+- `HSI_DEPLOY_CONFIG=configs/deploy/hypersigma_v3_local_gpu_web.json`
+- `HSI_OUTPUT_ROOT=outputs/web_ui`
+- `HSI_ALLOW_SERVER_FILE_PATHS=false`
+- `HSI_ALLOW_DEPLOY_CONFIG_OVERRIDE=false`
+- `HSI_DEFAULT_DEVICE=cuda`
+- `HSI_PUBLIC_BASE_URL=https://<your-tunnel-domain>`
+- `VITE_APP_MODE=local_gpu_web`
+
+Characteristics:
+
+- backend keeps using local absolute paths from the frozen deploy config
+- frontend remains upload-first and cannot submit local file paths
+- deploy-config, preview, inference, and metadata responses are public-safe
+- internal absolute paths stay only in backend-side logs
+
+## 4. `public-web`
 
 Purpose:
 
@@ -75,3 +101,4 @@ Characteristics:
   - encoder checkpoints
   - fine-tuned checkpoint
 - Public demo should default the frontend device selector to `cpu` unless a GPU Render instance is intentionally provisioned.
+- `local_gpu_web` should default the frontend device selector to `cuda` and keep the backend pinned to the owner-operated research PC.

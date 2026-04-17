@@ -1,9 +1,13 @@
 import argparse
 import json
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib")
+os.environ.setdefault("XDG_CACHE_HOME", "/tmp/xdg-cache")
 
 from hsi_water_detection_app.config import (
     DEFAULT_PATCH_SIZE,

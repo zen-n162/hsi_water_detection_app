@@ -12,7 +12,11 @@ Public web profile:
 
 - `configs/deploy/hypersigma_v3_calibrated_web.json`
 
-The backend selects the default profile from `HSI_DEFAULT_DEPLOY_CONFIG`.
+Local GPU web profile:
+
+- `configs/deploy/hypersigma_v3_local_gpu_web.json`
+
+The backend selects the default profile from `HSI_DEPLOY_CONFIG` / `HSI_DEFAULT_DEPLOY_CONFIG`.
 
 ## 2. Runtime modes that affect the API
 
@@ -31,6 +35,16 @@ The backend selects the default profile from `HSI_DEFAULT_DEPLOY_CONFIG`.
 - path-like override fields such as `model_checkpoint` are rejected
 - upload-based requests are the supported public path
 
+### Local GPU web mode
+
+- `HSI_APP_MODE=local_gpu_web`
+- backend runs on the owner-operated research PC
+- upload-based requests are the supported public path
+- `input_path` is rejected
+- `deploy_config_path` override is rejected
+- path-like override fields are rejected
+- public responses and `metadata.json` must stay path-safe
+
 ## 3. `GET /inference/deploy-config`
 
 Purpose:
@@ -44,6 +58,10 @@ Optional query parameter:
 Public mode rule:
 
 - if `HSI_ALLOW_DEPLOY_CONFIG_OVERRIDE=false`, non-empty `deploy_config_path` must be rejected
+
+External web rule:
+
+- in `public` and `local_gpu_web`, sensitive local path fields must be omitted or masked
 
 Response fields:
 
@@ -61,6 +79,9 @@ Response fields:
 - `allow_deploy_config_override`
 - `output_root`
 - `output_url_prefix`
+- `default_device`
+- `public_base_url`
+- `provenance_visibility`
 
 ## 4. `POST /preview/grayscale`
 
@@ -130,8 +151,15 @@ Expected inference artifacts:
 - `spatial_attention_overlay.png`
 - `spectral_attention.png`
 - `metadata.json`
+
+Local-only artifacts:
+
 - `run_config.json`
 - `api_result.json`
+
+External web rule:
+
+- `public` and `local_gpu_web` must not leave path-sensitive sibling artifacts in the statically served output directory
 
 ## 7. Health contract
 
@@ -152,15 +180,21 @@ The endpoint should report at least:
 
 Stable response / metadata fields should include:
 
-- `resolved_model_checkpoint`
-- `resolved_temperature_json`
 - `resolved_threshold`
-- `resolved_manifest`
-- `resolved_dataset`
 - `resolved_run_name`
 - `resolved_output_root`
 - `requested_device`
 - `executed_device`
 - `model_provenance`
 
-`resolved_dataset` is optional in public mode because the full training dataset is not required for upload-time inference.
+Local-only provenance may also include:
+
+- `resolved_model_checkpoint`
+- `resolved_temperature_json`
+- `resolved_manifest`
+- `resolved_dataset`
+
+External web rule:
+
+- `public` and `local_gpu_web` should expose deploy name, run name, threshold, model type, requested device, and executed device
+- `public` and `local_gpu_web` should not expose local absolute checkpoint, dataset, manifest, or calibration paths

@@ -13,6 +13,12 @@ import torch
 
 
 DEBUG = os.environ.get("HSI_DEBUG", "1") == "1"
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+_HYPERSIGMA_ROOT: Path | None = None
+_HYPERSPECTRAL_DETECTION_ROOT: Path | None = None
+_TARGET_DETECTION_ROOT: Path | None = None
+SSHTDFramework = None
+SpatialHTDFramework = None
 
 
 def dprint(*args):
@@ -20,11 +26,21 @@ def dprint(*args):
         print("[DEBUG]", *args)
 
 
+def _resolve_env_path(value: str) -> Path:
+    path = Path(value).expanduser()
+    if not path.is_absolute():
+        path = (PROJECT_ROOT / path).resolve()
+    return path
+
+
 def _candidate_hypersigma_roots() -> List[Path]:
     env_root = os.environ.get("HYPERSIGMA_ROOT")
-    candidates = []
+    runtime_root = os.environ.get("HSI_RUNTIME_ROOT")
+    candidates: List[Path] = []
     if env_root:
-        candidates.append(Path(env_root))
+        candidates.append(_resolve_env_path(env_root))
+    if runtime_root:
+        candidates.append(_resolve_env_path(runtime_root) / "upstream" / "HyperSIGMA")
     candidates.extend([
         Path("/home/zennakamura/MasterResearch/HyperSIGMA"),
         Path.home() / "MasterResearch" / "HyperSIGMA",
@@ -43,23 +59,62 @@ def _resolve_hypersigma_root() -> Path:
     )
 
 
-_HYPERSIGMA_ROOT = _resolve_hypersigma_root()
-_HYPERSPECTRAL_DETECTION_ROOT = _HYPERSIGMA_ROOT / "HyperspectralDetection"
-_TARGET_DETECTION_ROOT = _HYPERSPECTRAL_DETECTION_ROOT / "Target_Detection"
+def _ensure_hypersigma_imports() -> tuple[Path, Path, Path, Any, Any]:
+    global _HYPERSIGMA_ROOT
+    global _HYPERSPECTRAL_DETECTION_ROOT
+    global _TARGET_DETECTION_ROOT
+    global SSHTDFramework
+    global SpatialHTDFramework
 
-for p in [
-    str(_HYPERSIGMA_ROOT),
-    str(_HYPERSPECTRAL_DETECTION_ROOT),
-    str(_TARGET_DETECTION_ROOT),
-]:
-    if p not in sys.path:
-        sys.path.append(p)
+    if (
+        _HYPERSIGMA_ROOT is not None
+        and _HYPERSPECTRAL_DETECTION_ROOT is not None
+        and _TARGET_DETECTION_ROOT is not None
+        and SSHTDFramework is not None
+        and SpatialHTDFramework is not None
+    ):
+        return (
+            _HYPERSIGMA_ROOT,
+            _HYPERSPECTRAL_DETECTION_ROOT,
+            _TARGET_DETECTION_ROOT,
+            SSHTDFramework,
+            SpatialHTDFramework,
+        )
 
-from Target_Detection.models.models import SSHTDFramework, SpatialHTDFramework  # noqa: E402
+    hypersigma_root = _resolve_hypersigma_root()
+    hyperspectral_detection_root = hypersigma_root / "HyperspectralDetection"
+    target_detection_root = hyperspectral_detection_root / "Target_Detection"
 
-dprint("Resolved HyperSIGMA root:", _HYPERSIGMA_ROOT)
-dprint("Resolved HyperspectralDetection root:", _HYPERSPECTRAL_DETECTION_ROOT)
-dprint("Resolved Target_Detection root:", _TARGET_DETECTION_ROOT)
+    for p in [
+        str(hypersigma_root),
+        str(hyperspectral_detection_root),
+        str(target_detection_root),
+    ]:
+        if p not in sys.path:
+            sys.path.append(p)
+
+    from Target_Detection.models.models import (  # noqa: E402
+        SSHTDFramework as ImportedSSHTDFramework,
+        SpatialHTDFramework as ImportedSpatialHTDFramework,
+    )
+
+    _HYPERSIGMA_ROOT = hypersigma_root
+    _HYPERSPECTRAL_DETECTION_ROOT = hyperspectral_detection_root
+    _TARGET_DETECTION_ROOT = target_detection_root
+    SSHTDFramework = ImportedSSHTDFramework
+    SpatialHTDFramework = ImportedSpatialHTDFramework
+
+    dprint("Resolved HyperSIGMA root:", _HYPERSIGMA_ROOT)
+    dprint("Resolved HyperspectralDetection root:", _HYPERSPECTRAL_DETECTION_ROOT)
+    dprint("Resolved Target_Detection root:", _TARGET_DETECTION_ROOT)
+
+    return (
+        _HYPERSIGMA_ROOT,
+        _HYPERSPECTRAL_DETECTION_ROOT,
+        _TARGET_DETECTION_ROOT,
+        SSHTDFramework,
+        SpatialHTDFramework,
+    )
 
 
 @contextlib.contextmanager
@@ -75,15 +130,17 @@ def _pushd(path: Path):
 def _default_spat_checkpoint() -> Path:
     env_path = os.environ.get("HYPERSIGMA_SPAT_CHECKPOINT")
     if env_path:
-        return Path(env_path)
-    return _HYPERSPECTRAL_DETECTION_ROOT / "spat-vit-b-checkpoint-1599.pth"
+        return _resolve_env_path(env_path)
+    _, hyperspectral_detection_root, _, _, _ = _ensure_hypersigma_imports()
+    return hyperspectral_detection_root / "spat-vit-b-checkpoint-1599.pth"
 
 
 def _default_spec_checkpoint() -> Path:
     env_path = os.environ.get("HYPERSIGMA_SPEC_CHECKPOINT")
     if env_path:
-        return Path(env_path)
-    return _HYPERSPECTRAL_DETECTION_ROOT / "spec-vit-b-checkpoint-1599.pth"
+        return _resolve_env_path(env_path)
+    _, hyperspectral_detection_root, _, _, _ = _ensure_hypersigma_imports()
+    return hyperspectral_detection_root / "spec-vit-b-checkpoint-1599.pth"
 
 
 def _shape_of(x: Any) -> str:
@@ -503,9 +560,12 @@ def load_model(
         f"device={device}"
     )
 
+    hypersigma_root, hyperspectral_detection_root, _, ss_framework_cls, spatial_framework_cls = (
+        _ensure_hypersigma_imports()
+    )
     args = argparse.Namespace()
     load_info: Dict[str, Any] = {
-        "hypersigma_root": str(_HYPERSIGMA_ROOT),
+        "hypersigma_root": str(hypersigma_root),
         "model_type": model_type,
         "patch_size": patch_size,
         "in_channels": in_channels,
@@ -513,9 +573,9 @@ def load_model(
 
     try:
         if model_type == "ss":
-            dprint("Building SSHTDFramework with temporary cwd:", _HYPERSPECTRAL_DETECTION_ROOT)
-            with _pushd(_HYPERSPECTRAL_DETECTION_ROOT):
-                model = SSHTDFramework(args=args, img_size=patch_size, in_channels=in_channels)
+            dprint("Building SSHTDFramework with temporary cwd:", hyperspectral_detection_root)
+            with _pushd(hyperspectral_detection_root):
+                model = ss_framework_cls(args=args, img_size=patch_size, in_channels=in_channels)
 
             # 1) まず pretrained backbone を読む
             spat_ckpt = Path(spat_checkpoint) if spat_checkpoint else _default_spat_checkpoint()
@@ -546,9 +606,9 @@ def load_model(
             )
             return wrapper
 
-        dprint("Building SpatialHTDFramework with temporary cwd:", _HYPERSPECTRAL_DETECTION_ROOT)
-        with _pushd(_HYPERSPECTRAL_DETECTION_ROOT):
-            model = SpatialHTDFramework(args=args, img_size=patch_size, in_channels=in_channels)
+        dprint("Building SpatialHTDFramework with temporary cwd:", hyperspectral_detection_root)
+        with _pushd(hyperspectral_detection_root):
+            model = spatial_framework_cls(args=args, img_size=patch_size, in_channels=in_channels)
 
         spat_ckpt = (
             Path(spat_checkpoint)

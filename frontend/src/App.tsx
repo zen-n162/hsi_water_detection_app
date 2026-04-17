@@ -28,12 +28,21 @@ type UiError = {
   status?: number;
 };
 
+function withModeHint(hint?: string): string | undefined {
+  if (runtimeConfig.appMode !== 'local_gpu_web') return hint;
+  const tunnelHint =
+    'The backend research PC or its secure tunnel may be offline. Confirm FastAPI, the CUDA runtime, and Cloudflare Tunnel or Tailscale Funnel are running.';
+  if (!hint) return tunnelHint;
+  if (hint.includes(tunnelHint)) return hint;
+  return `${hint} ${tunnelHint}`;
+}
+
 function toUiError(error: unknown, fallbackTitle: string, fallbackDetail: string): UiError {
   if (error instanceof ApiError) {
     return {
       title: fallbackTitle,
       detail: error.message || fallbackDetail,
-      hint: error.hint,
+      hint: withModeHint(error.hint),
       status: error.status,
     };
   }
@@ -42,12 +51,14 @@ function toUiError(error: unknown, fallbackTitle: string, fallbackDetail: string
     return {
       title: fallbackTitle,
       detail: error.message || fallbackDetail,
+      hint: withModeHint(),
     };
   }
 
   return {
     title: fallbackTitle,
     detail: fallbackDetail,
+    hint: withModeHint(),
   };
 }
 
@@ -106,6 +117,9 @@ export default function App() {
         if (info.resolved?.threshold !== undefined && info.resolved?.threshold !== null) {
           setThreshold(String(info.resolved.threshold));
         }
+        if (info.runtime?.default_device) {
+          setDevice(String(info.runtime.default_device));
+        }
       } catch (err) {
         if (cancelled) return;
         setError(
@@ -146,7 +160,7 @@ export default function App() {
       const result = await loadPreview({
         sensor,
         device,
-        model_type: modelType,
+        model_type: runtimeConfig.externalWebMode ? undefined : modelType,
         deploy_config_path: runtimeConfig.showDeployConfigInput ? (deployConfigPath || undefined) : undefined,
         input_path: runtimeConfig.showServerPathInputs ? (inputPath || undefined) : undefined,
         hsi_file: hsiFile,
@@ -186,14 +200,14 @@ export default function App() {
       const result = await runInference({
         sensor,
         device,
-        model_type: modelType,
+        model_type: runtimeConfig.externalWebMode ? undefined : modelType,
         deploy_config_path: runtimeConfig.showDeployConfigInput ? (deployConfigPath || undefined) : undefined,
         input_path: runtimeConfig.showServerPathInputs ? (inputPath || undefined) : undefined,
         hsi_file: hsiFile,
         wavelength_file: wavelengthFile,
         model_checkpoint: runtimeConfig.showAdvancedOverrides ? (modelCheckpoint || undefined) : undefined,
         temperature_json: runtimeConfig.showAdvancedOverrides ? (temperatureJson || undefined) : undefined,
-        threshold: threshold === '' ? undefined : Number(threshold),
+        threshold: runtimeConfig.showAdvancedOverrides && threshold !== '' ? Number(threshold) : undefined,
         preview_band_index: previewBandIndex ? Number(previewBandIndex) : undefined,
         preview_wavelength: previewWavelength ? Number(previewWavelength) : undefined,
         row_start: roi.rowStart,
@@ -217,11 +231,19 @@ export default function App() {
         <h1>HSI Water Detection UI</h1>
       </header>
 
+      {runtimeConfig.usesOwnerOperatedGpu ? (
+        <div className="app-banner">
+          GPU inference runs on the owner-operated research PC through a secure tunnel. If preview or inference
+          fails, check that the backend PC is awake and the tunnel is online.
+        </div>
+      ) : null}
+
       <div className="workspace-layout">
         <aside className="sidebar">
           <SidebarControls
             appMode={runtimeConfig.appMode}
             deviceOptions={[...runtimeConfig.allowedDevices]}
+            showModelTypeInput={!runtimeConfig.externalWebMode}
             showServerPathInputs={runtimeConfig.showServerPathInputs}
             showDeployConfigInput={runtimeConfig.showDeployConfigInput}
             showAdvancedOverrides={runtimeConfig.showAdvancedOverrides}

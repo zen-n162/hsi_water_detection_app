@@ -157,6 +157,9 @@ export type InferenceResponse = {
   resolvedOutputRoot?: string;
   executedDevice?: string;
   requestedDevice?: string;
+  sensor?: string;
+  provenanceVisibility?: string;
+  modelProvenance?: Record<string, any>;
 
   stdout?: string;
   stderr?: string;
@@ -175,6 +178,9 @@ export type DeployConfigResponse = {
     allow_deploy_config_override?: boolean;
     output_root?: string;
     output_url_prefix?: string;
+    public_base_url?: string | null;
+    default_device?: string;
+    provenance_visibility?: string;
   };
 };
 
@@ -305,6 +311,9 @@ export async function runInference(req: InferenceRequest): Promise<InferenceResp
     resolvedOutputRoot: json.resolved_output_root,
     executedDevice: json.executed_device,
     requestedDevice: json.requested_device,
+    sensor: json.sensor,
+    provenanceVisibility: json.provenance_visibility,
+    modelProvenance: json.model_provenance,
     stdout: json.stdout,
     stderr: json.stderr,
     raw: json,

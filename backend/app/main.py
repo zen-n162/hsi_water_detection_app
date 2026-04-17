@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 from backend.app.api.routes_inference import router as inference_router
 from backend.app.api.routes_preview import router as preview_router
+from backend.app.services.deploy_config_service import to_safe_path_label
 from backend.app.settings import get_settings
 
 settings = get_settings()
@@ -37,11 +38,19 @@ def _json_error(
     code: str,
     hint: str | None = None,
 ):
+    safe_detail = detail
+    if settings.is_external_web_mode and code in {"missing_runtime_asset", "invalid_request", "internal_error"}:
+        safe_detail = {
+            "missing_runtime_asset": "A required runtime asset is missing on the backend PC.",
+            "invalid_request": "The request could not be processed by the backend service.",
+            "internal_error": "The backend service hit an internal error. Check the backend PC logs.",
+        }[code]
+
     return JSONResponse(
         status_code=status_code,
         content={
             "ok": False,
-            "detail": detail,
+            "detail": safe_detail,
             "code": code,
             "hint": hint,
         },
@@ -54,7 +63,7 @@ async def permission_error_handler(_request: Request, exc: PermissionError):
         status_code=403,
         detail=str(exc),
         code="forbidden_override",
-        hint="Use file upload inputs and the server default deploy profile in public mode.",
+        hint="Use file upload inputs and the server default deploy profile in external web mode.",
     )
 
 
@@ -88,24 +97,41 @@ async def unexpected_error_handler(_request: Request, exc: Exception):
 
 @app.get("/health")
 def health():
+    deploy_config_ref = (
+        to_safe_path_label(settings.default_deploy_config)
+        if settings.is_external_web_mode
+        else str(settings.default_deploy_config)
+    )
+
     return {
         "ok": True,
         "app_mode": settings.app_mode,
-        "runtime_root": str(settings.runtime_root),
-        "default_deploy_config": str(settings.default_deploy_config),
+        "default_device": settings.default_device,
+        "public_base_url": settings.public_base_url,
+        "runtime_root": to_safe_path_label(settings.runtime_root),
+        "default_deploy_config": deploy_config_ref,
         "default_deploy_config_exists": settings.default_deploy_config.exists(),
-        "output_root": str(settings.output_root),
+        "output_root": to_safe_path_label(settings.output_root),
         "output_url_prefix": settings.output_url_prefix,
         "allow_server_file_paths": settings.allow_server_file_paths,
         "allow_deploy_config_override": settings.allow_deploy_config_override,
         "cors_allow_origins": settings.cors_allow_origins,
         "inference_runtime": settings.inference_runtime,
-        "model_checkpoint_override": settings.model_checkpoint_override,
-        "temperature_json_override": settings.temperature_json_override,
+        "model_checkpoint_override": (
+            None if settings.is_external_web_mode else settings.model_checkpoint_override
+        ),
+        "temperature_json_override": (
+            None if settings.is_external_web_mode else settings.temperature_json_override
+        ),
         "threshold_override": settings.threshold_override,
-        "manifest_path_override": settings.manifest_path_override,
-        "dataset_path_override": settings.dataset_path_override,
+        "manifest_path_override": (
+            None if settings.is_external_web_mode else settings.manifest_path_override
+        ),
+        "dataset_path_override": (
+            None if settings.is_external_web_mode else settings.dataset_path_override
+        ),
         "render_service": os.environ.get("RENDER_SERVICE_NAME"),
+        "provenance_visibility": "public_safe" if settings.is_external_web_mode else "full_internal",
     }
 
 app.include_router(inference_router)

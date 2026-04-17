@@ -16,12 +16,19 @@ settings = get_settings()
 
 def _ensure_path_override_allowed(value: str | None, *, field_name: str):
     if value and not settings.allow_server_file_paths:
-        raise PermissionError(f"{field_name} is disabled in public mode.")
+        raise PermissionError(f"{field_name} is disabled in external web mode.")
 
 
 def _ensure_deploy_config_override_allowed(value: str | None):
     if value and not settings.allow_deploy_config_override:
-        raise PermissionError("deploy_config_path override is disabled in public mode.")
+        raise PermissionError("deploy_config_path override is disabled in external web mode.")
+
+
+def _ensure_runtime_override_disabled(value, *, field_name: str):
+    if value in {None, ""}:
+        return
+    if not settings.allow_deploy_config_override:
+        raise PermissionError(f"{field_name} override is disabled in external web mode.")
 
 
 @router.get("/inference/deploy-config")
@@ -39,7 +46,7 @@ async def run_inference(
 
     input_path: str | None = Form(default=None),
     sensor: str = Form("auto"),
-    device: str = Form("cpu"),
+    device: str | None = Form(default=None),
     deploy_config_path: str | None = Form(default=None),
 
     # legacy / optional
@@ -72,6 +79,7 @@ async def run_inference(
     xmax: float | None = Form(default=None),
     ymax: float | None = Form(default=None),
 ):
+    effective_device = (device or settings.default_device).strip() or settings.default_device
     effective_threshold = decision_threshold if decision_threshold is not None else threshold
     _ensure_deploy_config_override_allowed(deploy_config_path)
     _ensure_path_override_allowed(input_path, field_name="input_path")
@@ -81,6 +89,12 @@ async def run_inference(
     _ensure_path_override_allowed(patch_dataset_path, field_name="patch_dataset_path")
     _ensure_path_override_allowed(spat_checkpoint, field_name="spat_checkpoint")
     _ensure_path_override_allowed(spec_checkpoint, field_name="spec_checkpoint")
+    _ensure_runtime_override_disabled(temperature, field_name="temperature")
+    _ensure_runtime_override_disabled(effective_threshold, field_name="threshold")
+    _ensure_runtime_override_disabled(split_policy, field_name="split_policy")
+    _ensure_runtime_override_disabled(model_type, field_name="model_type")
+    _ensure_runtime_override_disabled(patch_size, field_name="patch_size")
+    _ensure_runtime_override_disabled(stride, field_name="stride")
 
     # 1) server-side path input
     if input_path:
@@ -88,7 +102,7 @@ async def run_inference(
             input_path=input_path,
             header_path=None,
             sensor=sensor,
-            device=device,
+            device=effective_device,
             deploy_config_path=deploy_config_path,
             model_checkpoint=model_checkpoint,
             spat_checkpoint=spat_checkpoint,
@@ -134,7 +148,7 @@ async def run_inference(
             input_path=str(hsi_path),
             header_path=str(wavelength_path) if wavelength_path else None,
             sensor=sensor,
-            device=device,
+            device=effective_device,
             deploy_config_path=deploy_config_path,
             model_checkpoint=model_checkpoint,
             spat_checkpoint=spat_checkpoint,

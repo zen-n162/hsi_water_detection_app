@@ -2,7 +2,7 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_BASE_URL?: string;
-  readonly VITE_APP_MODE?: 'local' | 'public';
+  readonly VITE_APP_MODE?: 'local' | 'public' | 'local_gpu_web';
   readonly VITE_DEFAULT_DEVICE?: string;
   readonly VITE_ALLOWED_DEVICES?: string;
   readonly VITE_DEFAULT_MODEL_TYPE?: string;
