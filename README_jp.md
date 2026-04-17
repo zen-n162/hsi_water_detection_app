@@ -1,159 +1,102 @@
 # hsi_water_detection_app
 
-**HyperSIGMA** を中心に構築した、GUI付きの湿潤・水関連ハイパースペクトル推論ワークフローです。校正済みの本番候補デプロイ経路まで含めて整理されています。
+凍結済み HyperSIGMA deploy profile を中心にした、研究用パイプライン兼 Web デモアプリです。
 
-このリポジトリには現在、次の2系統が同居しています。
+このリポジトリには意図的に分離した 2 層があります。
 
-1. **研究パイプライン**  
-   patch データセット構築、baseline / HyperSIGMA の学習・評価、threshold 調整、split leakage 監査、score calibration を行う流れ
-2. **GUI / バックエンド推論アプリケーション**  
-   freeze した deploy config を読み込み、ROI 単位の推論を provenance 付きで実行する流れ
+1. データセット構築、学習、評価、校正、freeze artifact を扱う研究パイプライン
+2. ROI preview / inference を provenance 付きで実行する Web 向け frontend/backend スタック
 
-## 現在の状態
+## 推奨公開構成
 
-現在の production-candidate GUI 既定モデルは、**calibrated HyperSIGMA v3 block-split run** です。
+今回整備した公開構成の第一候補は次です。
 
-- Deploy config: `configs/deploy/hypersigma_v3_calibrated.json`
-- Run name: `E02_head_only_posw_v3_block224`
+- Frontend: Netlify
+- Backend API: Render
+- Runtime 資産: Render 側の `runtime/` mount
+
+今回の整理で次を分離しました。
+
+- 研究ローカル資産と研究ワークフロー
+- upload-first の公開 Web 挙動
+- 環境変数ベースの deployment 設定
+
+参照:
+
+- [Web deployment 監査](docs/web_deployment_audit.md)
+- [Web deployment 概要](docs/web_deployment.md)
+- [Netlify + Render 手順書](docs/netlify_render_deploy_guide.md)
+- [Web release checklist](docs/web_release_checklist.md)
+
+## 現在の freeze profile
+
+ローカル研究/既定 profile:
+
+- Config: `configs/deploy/hypersigma_v3_calibrated.json`
+- Run: `E02_head_only_posw_v3_block224`
 - Model type: `ss`
-- Patch size: `64`
-- Stride: `32`
-- Band count: `170`
-- Label source: `confidence_ali.tif`
-- Manifest: `annotations/manifests/wetness_manifest_from_confidence_ali_blocksplit.csv`
-- Patch dataset: `datasets/processed/wetness_pretrain_v3`
-- Checkpoint: `experiments/runs_v3/E02_head_only_posw_v3_block224/model_best.pt`
-- Calibration: `experiments/runs_v3/E02_head_only_posw_v3_block224/temperature_scaling_val.json`
 - Threshold: `0.327428693347738`
 
-calibrated HyperSIGMA を GUI の既定にした理由は、既存の attention 対応推論経路を維持しつつ、uncalibrated run より calibration 挙動が改善され、ランキング性能も十分に競争力があったためです。
+公開 Web profile:
 
-## このプロジェクトでできること
+- Config: `configs/deploy/hypersigma_v3_calibrated_web.json`
+- Output root: `runtime/outputs`
+- Mounted checkpoint root: `runtime/assets/models/...`
 
-### 研究側
-- `confidence_ali.tif` から patch-level データセットを再構築
-- baseline CNN と HyperSIGMA の fine-tuning 実験
-- val / test に対して以下を評価
-  - ROC-AUC
-  - PR-AUC
-  - Precision / Recall / F1
-  - confusion matrix
-  - v3 では必要に応じて Brier score / ECE
-- validation 予測から threshold を最適化
-- validation のみを使った temperature scaling
-- run 同士の比較とランキング集約
-- split policy ごとの leakage リスク監査
+## Runtime mode
 
-### アプリケーション側
-- ROI ベースの推論バックエンドを提供
-- deploy config 駆動で既定モデルを解決
-- 以下の出力を生成
-  - probability map
-  - probability overlay
-  - spatial attention overlay
-  - spectral attention plot
-  - metadata / provenance JSON
-- API 応答と保存 metadata の両方で、checkpoint、threshold、calibration file、manifest、dataset、split policy、実行 device を追跡可能
+詳細は [Runtime modes](docs/runtime_modes.md) を参照してください。
 
-## リポジトリ構成
+要点:
 
-```text
-backend/
-  app/
-    api/
-    services/
-configs/
-  deploy/
-docs/
-frontend/
-research/
-  datasets/
-  evaluation/
-  training/
-src/
-  hsi_water_detection_app/
-annotations/
-  manifests/
-datasets/
-  processed/
-experiments/
-  runs_v3/
-  eval_v3/
-outputs/
-```
+- `local-research`: 研究用の学習・評価・freeze workflow
+- `local-web-dev`: ローカル frontend/backend 開発。必要なら server-side path を使える
+- `public-web`: 公開デモ用。upload 前提で path override を無効化
 
-## 主なドキュメント
+## ローカル開発
 
-- [研究パイプライン](docs/research_pipeline.md)
-- [GUI 推論契約](docs/gui_inference_contract.md)
-- [モデルカード: HyperSIGMA v3 calibrated](docs/model_card_hypersigma_v3_calibrated.md)
+### Backend
 
-## クイックスタート
-
-### 1. Backend
 ```bash
 cd /home/zennakamura/MasterResearch/hsi_water_detection_app
+cp backend/.env.example backend/.env
 PYTHONPATH=src:. uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
 ```
 
-### 2. Frontend
+従来の conda subprocess 挙動を使いたい場合:
+
+```bash
+export HSI_INFERENCE_RUNTIME=conda
+export HSI_INFERENCE_CONDA_ENV=HyperSIGMA
+```
+
+### Frontend
+
 ```bash
 cd /home/zennakamura/MasterResearch/hsi_water_detection_app/frontend
+cp .env.example .env.local
+npm install
 npm run dev -- --host
 ```
 
-### 3. Streamlit app（ブランチで使う場合）
-```bash
-cd /home/zennakamura/MasterResearch/hsi_water_detection_app
-python -m streamlit run ./src/hsi_water_detection_app/app.py
-```
+## 追加した公開向けファイル
 
-## freeze された production-candidate artifacts
+- `frontend/.env.example`
+- `frontend/.env.production.example`
+- `frontend/netlify.toml`
+- `backend/.env.example`
+- `render.yaml`
+- `configs/deploy/hypersigma_v3_calibrated_web.json`
 
-現在の GUI production-candidate freeze は、次のファイルで記録されています。
+## 重要な制約
 
-- `experiments/eval_v3/release_freeze.json`
-- `experiments/eval_v3/release_verification.json`
-- `experiments/eval_v3/runtime_versions.json`
-- `experiments/eval_v3/gui_acceptance_result.json`
-- `experiments/eval_v3/deploy_consistency_audit.json`
-- `docs/final_hypersigma_gui_handover.md`
+- バックエンドは外部 HyperSIGMA repository を即時解決しなくても起動できるようになりましたが、実推論には runtime model assets の mount がまだ必要です。
+- 公開モードでは server-side file path と deploy-config override を既定で無効化しています。
+- 現行 HyperSIGMA 公開デモ経路は、大きな fine-tuned checkpoint と上流 weights に依存するため、CPU/GPU 環境差分の影響を受けます。
 
-## ここまでの研究ハイライト
+## 主なドキュメント
 
-### データパイプライン
-- ラベルの source of truth を旧 ROI 中心方式から `confidence_ali.tif` に移行
-- patch manifest をラスタ truth から再生成
-- v3 データセットでは `block_size=224` の **spatial block split** を採用
-- 以前の dataset version と比べて leakage を低減
-
-### モデル評価
-- baseline は引き続き重要な reference path
-- HyperSIGMA 実験 E01 / E02 / E05 / E07 / E09 を整理・比較
-- GUI deployment 向けの最良 HyperSIGMA run は `E02_head_only_posw_v3_block224`
-- validation-only temperature scaling による calibration を追加
-
-### デプロイ / GUI 統合
-- GUI / backend / CLI / metadata を単一 deploy config から解決する構成に整理
-- provenance を API 応答と保存 metadata の両方に保持
-- acceptance path で GPU 実行を確認
-- release candidate を Git tag 付きで freeze
-
-## 既知の制約
-
-- データセット規模がまだ小さく、split policy の影響が大きい
-- HyperSIGMA の score collapse に対して calibration 対応が必要
-- baseline は現状 reference path であり、GUI の既定推論 route ではない
-- deploy default を変更した場合、frontend / backend の両方を継続的にテストする必要がある
-
-## 今後の推奨タスク
-
-1. baseline GUI inference path を追加する
-2. 単一 temperature scaling を超える calibration 改善を行う
-3. spatial split policy と leakage 制御をさらに強化する
-4. 学習・評価に score collapse 診断を追加する
-5. より安定した運用点になるよう threshold policy を再検討する
-
-## 引用
-
-HyperSIGMA 自体を利用する場合は、元の HyperSIGMA 論文とリポジトリを引用してください。上流プロジェクトの README は本リポジトリ履歴にも含まれており、今回の統合作業における foundation model 参照元として利用しました。
+- [GUI inference contract](docs/gui_inference_contract.md)
+- [Runtime modes](docs/runtime_modes.md)
+- [Research pipeline](docs/research_pipeline.md)
+- [Model card: HyperSIGMA v3 calibrated](docs/model_card_hypersigma_v3_calibrated.md)

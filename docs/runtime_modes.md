@@ -1,39 +1,77 @@
 # Runtime Modes
 
-This repository now keeps production and research inference paths separate.
+This repository now distinguishes three runtime modes so that research freeze work and public web deployment do not step on each other.
 
-## Production Mode
+## 1. `local-research`
 
-Production mode is the GUI default and must remain stable.
+Purpose:
 
-- Model family: calibrated HyperSIGMA v3
-- Deploy config: `configs/deploy/hypersigma_v3_calibrated.json`
-- Manifest: `annotations/manifests/wetness_manifest_from_confidence_ali_blocksplit.csv`
-- Dataset: `datasets/processed/wetness_pretrain_v3`
-- Checkpoint: `experiments/runs_v3/E02_head_only_posw_v3_block224/model_best.pt`
-- Calibration: `experiments/runs_v3/E02_head_only_posw_v3_block224/temperature_scaling_val.json`
-- Threshold: `0.327428693347738`
+- training
+- evaluation
+- threshold selection
+- calibration fitting
+- release freeze reproduction
 
-Use this mode for the backend, GUI, smoke tests, and any reproducible demo or handover.
+Characteristics:
 
-## Reference Mode
+- can reference local datasets and experiment directories
+- can use ad-hoc research scripts
+- can use GPU and local absolute paths
+- should keep using `configs/deploy/hypersigma_v3_calibrated.json` for the frozen local default
 
-Reference mode is kept for comparison and fallback planning.
+## 2. `local-web-dev`
 
-- Model family: baseline v3
-- Checkpoint: `experiments/runs_v3/baseline_v3_block224/model_best.pt`
-- Threshold: `experiments/eval_v3/baseline_best_val_threshold.json`
-- Role: reference only, not the GUI default
+Purpose:
 
-Use this mode when comparing probability quality or validating that HyperSIGMA regressions are real.
+- local frontend/backend integration
+- debugging upload flow, ROI UI, and output rendering
+- validating deployment changes before cloud rollout
 
-## Research Mode
+Recommended settings:
 
-Research mode covers any future fine-tuning candidate that is not yet frozen.
+- `HSI_APP_MODE=local`
+- `HSI_DEFAULT_DEPLOY_CONFIG=configs/deploy/hypersigma_v3_calibrated.json`
+- `HSI_ALLOW_SERVER_FILE_PATHS=true`
+- `HSI_ALLOW_DEPLOY_CONFIG_OVERRIDE=true`
+- `VITE_APP_MODE=local`
 
-- Candidate runs: future `experiments/runs_v3/*` or later versioned runs
-- Calibration variants beyond temperature scaling
-- Alternative split policies
-- Alternative threshold policies
+Characteristics:
 
-Research mode must not overwrite the production deploy config until it passes the same acceptance and freeze steps.
+- frontend may show server-side path inputs
+- backend may accept `input_path` and path overrides
+- outputs are stored under `outputs/`
+
+## 3. `public-web`
+
+Purpose:
+
+- Netlify + Render public demo
+- upload-first inference flow
+- minimal safe surface area
+
+Recommended settings:
+
+- `HSI_APP_MODE=public`
+- `HSI_DEFAULT_DEPLOY_CONFIG=configs/deploy/hypersigma_v3_calibrated_web.json`
+- `HSI_OUTPUT_ROOT=runtime/outputs`
+- `HSI_ALLOW_SERVER_FILE_PATHS=false`
+- `HSI_ALLOW_DEPLOY_CONFIG_OVERRIDE=false`
+- `VITE_APP_MODE=public`
+
+Characteristics:
+
+- frontend hides local path and deploy-config override inputs
+- backend rejects `input_path` and deploy-config override requests
+- runtime outputs are served from the backend static mount at `/outputs/...`
+- model checkpoints and upstream HyperSIGMA assets are expected outside Git, under `runtime/`
+
+## GPU-dependent vs GPU-independent behavior
+
+- Preview generation is GPU-independent.
+- Backend boot and `/health` are GPU-independent.
+- Real HyperSIGMA inference is environment-dependent and requires:
+  - PyTorch + raster stack
+  - upstream HyperSIGMA repository
+  - encoder checkpoints
+  - fine-tuned checkpoint
+- Public demo should default the frontend device selector to `cpu` unless a GPU Render instance is intentionally provisioned.

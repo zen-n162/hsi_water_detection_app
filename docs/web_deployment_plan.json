@@ -1,0 +1,62 @@
+{
+  "generated_at": "2026-04-17",
+  "status": "prepared_for_manual_cloud_setup",
+  "recommended_stack": {
+    "frontend": "Netlify",
+    "backend": "Render",
+    "public_profile": "configs/deploy/hypersigma_v3_calibrated_web.json"
+  },
+  "runtime_modes": [
+    "local-research",
+    "local-web-dev",
+    "public-web"
+  ],
+  "frontend": {
+    "build_ready": true,
+    "api_base_env": "VITE_API_BASE_URL",
+    "public_mode_env": "VITE_APP_MODE",
+    "netlify_config_file": "frontend/netlify.toml",
+    "router_redirect_required": false
+  },
+  "backend": {
+    "entrypoint": "backend.app.main:app",
+    "healthcheck_path": "/health",
+    "render_config_file": "render.yaml",
+    "output_root_env": "HSI_OUTPUT_ROOT",
+    "cors_env": "HSI_CORS_ALLOW_ORIGINS",
+    "public_mode_env": "HSI_APP_MODE"
+  },
+  "runtime_assets": [
+    {
+      "name": "fine_tuned_model_checkpoint",
+      "path": "runtime/assets/models/E02_head_only_posw_v3_block224/model_best.pt",
+      "classification": "MUST_MOUNT"
+    },
+    {
+      "name": "temperature_scaling_json",
+      "path": "experiments/runs_v3/E02_head_only_posw_v3_block224/temperature_scaling_val.json",
+      "classification": "MUST_BUNDLE"
+    },
+    {
+      "name": "manifest",
+      "path": "annotations/manifests/wetness_manifest_from_confidence_ali_blocksplit.csv",
+      "classification": "MUST_BUNDLE"
+    },
+    {
+      "name": "dataset",
+      "path": null,
+      "classification": "LOCAL_ONLY"
+    },
+    {
+      "name": "hypersigma_upstream_repo",
+      "path": "runtime/assets/upstream/HyperSIGMA",
+      "classification": "MUST_MOUNT"
+    }
+  ],
+  "remaining_human_decisions": [
+    "Validate whether CPU-only Render latency is acceptable for the HyperSIGMA public demo",
+    "Choose the final Render plan and persistent disk size",
+    "Set the production Netlify domain list in HSI_CORS_ALLOW_ORIGINS",
+    "Decide whether the first public demo should expose HyperSIGMA only or also add a baseline CPU-safe path"
+  ]
+}

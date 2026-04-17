@@ -1,0 +1,327 @@
+{
+  "generated_at": "2026-04-17",
+  "frontend": [
+    {
+      "name": "VITE_API_BASE_URL",
+      "required": true,
+      "example_value": "https://hsi-water-detection-api.onrender.com",
+      "where_used": [
+        "frontend/src/lib/runtime.ts",
+        "frontend/src/lib/api.ts"
+      ],
+      "production_value_source": "Netlify site environment variables",
+      "secret": false
+    },
+    {
+      "name": "VITE_APP_MODE",
+      "required": true,
+      "example_value": "public",
+      "where_used": [
+        "frontend/src/lib/runtime.ts"
+      ],
+      "production_value_source": "Netlify site environment variables",
+      "secret": false
+    },
+    {
+      "name": "VITE_DEFAULT_DEVICE",
+      "required": false,
+      "example_value": "cpu",
+      "where_used": [
+        "frontend/src/lib/runtime.ts",
+        "frontend/src/App.tsx"
+      ],
+      "production_value_source": "Netlify site environment variables",
+      "secret": false
+    },
+    {
+      "name": "VITE_ALLOWED_DEVICES",
+      "required": false,
+      "example_value": "cpu",
+      "where_used": [
+        "frontend/src/lib/runtime.ts",
+        "frontend/src/components/SidebarControls.tsx"
+      ],
+      "production_value_source": "Netlify site environment variables",
+      "secret": false
+    },
+    {
+      "name": "VITE_DEFAULT_MODEL_TYPE",
+      "required": false,
+      "example_value": "ss",
+      "where_used": [
+        "frontend/src/lib/runtime.ts",
+        "frontend/src/App.tsx"
+      ],
+      "production_value_source": "Netlify site environment variables",
+      "secret": false
+    },
+    {
+      "name": "VITE_DEFAULT_SENSOR",
+      "required": false,
+      "example_value": "hyperion",
+      "where_used": [
+        "frontend/src/lib/runtime.ts",
+        "frontend/src/App.tsx"
+      ],
+      "production_value_source": "Netlify site environment variables",
+      "secret": false
+    },
+    {
+      "name": "VITE_SHOW_SERVER_PATH_INPUTS",
+      "required": false,
+      "example_value": "false",
+      "where_used": [
+        "frontend/src/lib/runtime.ts",
+        "frontend/src/components/SidebarControls.tsx"
+      ],
+      "production_value_source": "Netlify site environment variables",
+      "secret": false
+    },
+    {
+      "name": "VITE_SHOW_DEPLOY_CONFIG_INPUT",
+      "required": false,
+      "example_value": "false",
+      "where_used": [
+        "frontend/src/lib/runtime.ts",
+        "frontend/src/App.tsx"
+      ],
+      "production_value_source": "Netlify site environment variables",
+      "secret": false
+    },
+    {
+      "name": "VITE_SHOW_ADVANCED_OVERRIDES",
+      "required": false,
+      "example_value": "false",
+      "where_used": [
+        "frontend/src/lib/runtime.ts",
+        "frontend/src/App.tsx"
+      ],
+      "production_value_source": "Netlify site environment variables",
+      "secret": false
+    }
+  ],
+  "backend": [
+    {
+      "name": "HSI_APP_MODE",
+      "required": true,
+      "example_value": "public",
+      "where_used": [
+        "backend/app/settings.py",
+        "backend/app/main.py"
+      ],
+      "production_value_source": "render.yaml",
+      "secret": false
+    },
+    {
+      "name": "HSI_DEPLOY_CONFIG",
+      "required": true,
+      "example_value": "configs/deploy/hypersigma_v3_calibrated_web.json",
+      "where_used": [
+        "backend/app/settings.py",
+        "backend/app/services/deploy_config_service.py"
+      ],
+      "production_value_source": "render.yaml",
+      "secret": false
+    },
+    {
+      "name": "HSI_RUNTIME_ROOT",
+      "required": true,
+      "example_value": "runtime",
+      "where_used": [
+        "backend/app/settings.py",
+        "backend/app/main.py",
+        "src/hsi_water_detection_app/models/hyper_sigma.py"
+      ],
+      "production_value_source": "render.yaml",
+      "secret": false
+    },
+    {
+      "name": "HSI_OUTPUT_ROOT",
+      "required": true,
+      "example_value": "runtime/outputs",
+      "where_used": [
+        "backend/app/settings.py",
+        "backend/app/main.py",
+        "backend/app/services/inference_service.py"
+      ],
+      "production_value_source": "render.yaml",
+      "secret": false
+    },
+    {
+      "name": "HSI_OUTPUT_URL_PREFIX",
+      "required": true,
+      "example_value": "/outputs",
+      "where_used": [
+        "backend/app/settings.py",
+        "backend/app/main.py",
+        "backend/app/services/preview_service.py"
+      ],
+      "production_value_source": "render.yaml",
+      "secret": false
+    },
+    {
+      "name": "HSI_CORS_ALLOW_ORIGINS",
+      "required": true,
+      "example_value": "https://hsi-water-detection.netlify.app,https://deploy-preview-123--hsi-water-detection.netlify.app",
+      "where_used": [
+        "backend/app/settings.py",
+        "backend/app/main.py"
+      ],
+      "production_value_source": "Render dashboard environment variables",
+      "secret": false
+    },
+    {
+      "name": "HSI_CORS_ALLOW_CREDENTIALS",
+      "required": false,
+      "example_value": "false",
+      "where_used": [
+        "backend/app/settings.py",
+        "backend/app/main.py"
+      ],
+      "production_value_source": "Render dashboard or default",
+      "secret": false
+    },
+    {
+      "name": "HSI_ALLOW_SERVER_FILE_PATHS",
+      "required": true,
+      "example_value": "false",
+      "where_used": [
+        "backend/app/settings.py",
+        "backend/app/api/routes_preview.py",
+        "backend/app/api/routes_inference.py"
+      ],
+      "production_value_source": "render.yaml",
+      "secret": false
+    },
+    {
+      "name": "HSI_ALLOW_DEPLOY_CONFIG_OVERRIDE",
+      "required": true,
+      "example_value": "false",
+      "where_used": [
+        "backend/app/settings.py",
+        "backend/app/api/routes_inference.py"
+      ],
+      "production_value_source": "render.yaml",
+      "secret": false
+    },
+    {
+      "name": "HSI_MODEL_CHECKPOINT",
+      "required": false,
+      "example_value": "runtime/assets/models/E02_head_only_posw_v3_block224/model_best.pt",
+      "where_used": [
+        "backend/app/settings.py",
+        "backend/app/services/deploy_config_service.py"
+      ],
+      "production_value_source": "Render dashboard only for emergency override",
+      "secret": false
+    },
+    {
+      "name": "HSI_TEMPERATURE_JSON",
+      "required": false,
+      "example_value": "runtime/assets/models/E02_head_only_posw_v3_block224/temperature_scaling_val.json",
+      "where_used": [
+        "backend/app/settings.py",
+        "backend/app/services/deploy_config_service.py"
+      ],
+      "production_value_source": "Render dashboard only for emergency override",
+      "secret": false
+    },
+    {
+      "name": "HSI_THRESHOLD",
+      "required": false,
+      "example_value": "0.327428693347738",
+      "where_used": [
+        "backend/app/settings.py",
+        "backend/app/services/deploy_config_service.py"
+      ],
+      "production_value_source": "Render dashboard only for emergency override",
+      "secret": false
+    },
+    {
+      "name": "HSI_MANIFEST_PATH",
+      "required": false,
+      "example_value": "runtime/assets/manifests/wetness_manifest_from_confidence_ali_blocksplit.csv",
+      "where_used": [
+        "backend/app/settings.py",
+        "backend/app/services/deploy_config_service.py"
+      ],
+      "production_value_source": "Render dashboard only for emergency override",
+      "secret": false
+    },
+    {
+      "name": "HSI_DATASET_PATH",
+      "required": false,
+      "example_value": "runtime/assets/datasets/wetness_pretrain_v3_minimal",
+      "where_used": [
+        "backend/app/settings.py",
+        "backend/app/services/deploy_config_service.py"
+      ],
+      "production_value_source": "Render dashboard only for emergency override",
+      "secret": false
+    },
+    {
+      "name": "HSI_INFERENCE_RUNTIME",
+      "required": false,
+      "example_value": "current",
+      "where_used": [
+        "backend/app/settings.py",
+        "backend/app/services/inference_service.py"
+      ],
+      "production_value_source": "render.yaml or default",
+      "secret": false
+    },
+    {
+      "name": "HSI_INFERENCE_CONDA_ENV",
+      "required": false,
+      "example_value": "HyperSIGMA",
+      "where_used": [
+        "backend/app/settings.py",
+        "backend/app/services/inference_service.py"
+      ],
+      "production_value_source": "Render dashboard only if HSI_INFERENCE_RUNTIME=conda",
+      "secret": false
+    },
+    {
+      "name": "HSI_INFERENCE_PYTHON_BIN",
+      "required": false,
+      "example_value": "/opt/render/project/src/.venv/bin/python",
+      "where_used": [
+        "backend/app/settings.py",
+        "backend/app/services/inference_service.py"
+      ],
+      "production_value_source": "Render dashboard only if interpreter override is needed",
+      "secret": false
+    },
+    {
+      "name": "HYPERSIGMA_ROOT",
+      "required": false,
+      "example_value": "runtime/assets/upstream/HyperSIGMA",
+      "where_used": [
+        "src/hsi_water_detection_app/models/hyper_sigma.py"
+      ],
+      "production_value_source": "render.yaml or inferred from HSI_RUNTIME_ROOT",
+      "secret": false
+    },
+    {
+      "name": "HYPERSIGMA_SPAT_CHECKPOINT",
+      "required": false,
+      "example_value": "runtime/assets/upstream/HyperSIGMA/HyperspectralDetection/spat-vit-b-checkpoint-1599.pth",
+      "where_used": [
+        "src/hsi_water_detection_app/models/hyper_sigma.py"
+      ],
+      "production_value_source": "render.yaml or inferred from HYPERSIGMA_ROOT layout",
+      "secret": false
+    },
+    {
+      "name": "HYPERSIGMA_SPEC_CHECKPOINT",
+      "required": false,
+      "example_value": "runtime/assets/upstream/HyperSIGMA/HyperspectralDetection/spec-vit-b-checkpoint-1599.pth",
+      "where_used": [
+        "src/hsi_water_detection_app/models/hyper_sigma.py"
+      ],
+      "production_value_source": "render.yaml or inferred from HYPERSIGMA_ROOT layout",
+      "secret": false
+    }
+  ],
+  "shared": []
+}

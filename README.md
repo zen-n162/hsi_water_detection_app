@@ -1,157 +1,102 @@
 # hsi_water_detection_app
 
-GUI-backed wetness and water-related hyperspectral inference workflow built around **HyperSIGMA** and a calibrated production-candidate deployment path.
+Research and demo application for hyperspectral water detection built around a frozen HyperSIGMA deployment profile.
 
-This repository now contains both:
+This repository contains two intentionally separate layers:
 
-1. a **research pipeline** for building patch datasets, training/evaluating baseline and HyperSIGMA models, tuning thresholds, auditing split leakage, and calibrating scores, and  
-2. a **GUI / backend inference application** that loads a frozen deploy configuration and runs ROI-based inference with provenance tracking.
+1. a research pipeline for dataset building, training, evaluation, calibration, and freeze artifacts
+2. a web-facing frontend/backend demo stack for ROI preview and inference with provenance
 
-## Current status
+## Recommended deployment
 
-The current production-candidate GUI default is the **calibrated HyperSIGMA v3 block-split run**:
+The prepared public topology is:
 
-- Deploy config: `configs/deploy/hypersigma_v3_calibrated.json`
-- Run name: `E02_head_only_posw_v3_block224`
+- Frontend: Netlify
+- Backend API: Render
+- Runtime assets: mounted under `runtime/` on the Render service
+
+The codebase now separates:
+
+- research-local assets and workflows
+- upload-first public web behavior
+- environment-based deployment settings
+
+See:
+
+- [Web deployment audit](docs/web_deployment_audit.md)
+- [Web deployment overview](docs/web_deployment.md)
+- [Netlify + Render deploy guide](docs/netlify_render_deploy_guide.md)
+- [Web release checklist](docs/web_release_checklist.md)
+
+## Current frozen profile
+
+Local research/default profile:
+
+- Config: `configs/deploy/hypersigma_v3_calibrated.json`
+- Run: `E02_head_only_posw_v3_block224`
 - Model type: `ss`
-- Patch size: `64`
-- Stride: `32`
-- Band count: `170`
-- Label source: `confidence_ali.tif`
-- Manifest: `annotations/manifests/wetness_manifest_from_confidence_ali_blocksplit.csv`
-- Patch dataset: `datasets/processed/wetness_pretrain_v3`
-- Checkpoint: `experiments/runs_v3/E02_head_only_posw_v3_block224/model_best.pt`
-- Calibration: `experiments/runs_v3/E02_head_only_posw_v3_block224/temperature_scaling_val.json`
 - Threshold: `0.327428693347738`
 
-A calibrated HyperSIGMA GUI default was selected because it keeps the existing attention-capable inference path while preserving competitive ranking performance and improved calibration behavior relative to the uncalibrated run.
+Public web profile:
 
-## What this project does
+- Config: `configs/deploy/hypersigma_v3_calibrated_web.json`
+- Output root: `runtime/outputs`
+- Mounted checkpoint root: `runtime/assets/models/...`
 
-### Research side
-- Rebuilds patch-level datasets from `confidence_ali.tif`
-- Supports baseline CNN and HyperSIGMA fine-tuning experiments
-- Evaluates on val/test with:
-  - ROC-AUC
-  - PR-AUC
-  - Precision / Recall / F1
-  - confusion matrix
-  - optional Brier score / ECE in the v3 pipeline
-- Tunes thresholds from validation predictions
-- Fits validation-only temperature scaling
-- Compares runs and summarizes experiment rankings
-- Audits leakage risk under different split policies
+## Runtime modes
 
-### Application side
-- Serves an ROI-based inference backend
-- Supports deploy-config-driven default model loading
-- Produces:
-  - probability maps
-  - probability overlays
-  - spatial attention overlays
-  - spectral attention plots
-  - metadata / provenance JSON
-- Exposes the deployed checkpoint, threshold, calibration file, manifest, dataset, split policy, and executed device through API responses and saved metadata
+See [Runtime modes](docs/runtime_modes.md).
 
-## Repository structure
+The short version:
 
-```text
-backend/
-  app/
-    api/
-    services/
-configs/
-  deploy/
-docs/
-frontend/
-research/
-  datasets/
-  evaluation/
-  training/
-src/
-  hsi_water_detection_app/
-annotations/
-  manifests/
-datasets/
-  processed/
-experiments/
-  runs_v3/
-  eval_v3/
-outputs/
-```
+- `local-research`: research training/eval and freeze workflows
+- `local-web-dev`: local frontend/backend development with optional server-side paths
+- `public-web`: upload-first public demo behavior with path overrides disabled
 
-## Main documents
+## Local development
 
-- [Research pipeline](docs/research_pipeline.md)
-- [GUI inference contract](docs/gui_inference_contract.md)
-- [Model card: HyperSIGMA v3 calibrated](docs/model_card_hypersigma_v3_calibrated.md)
+### Backend
 
-## Quick start
-
-### 1. Backend
 ```bash
 cd /home/zennakamura/MasterResearch/hsi_water_detection_app
+cp backend/.env.example backend/.env
 PYTHONPATH=src:. uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
 ```
 
-### 2. Frontend
+If you need the legacy conda subprocess behavior, set:
+
+```bash
+export HSI_INFERENCE_RUNTIME=conda
+export HSI_INFERENCE_CONDA_ENV=HyperSIGMA
+```
+
+### Frontend
+
 ```bash
 cd /home/zennakamura/MasterResearch/hsi_water_detection_app/frontend
+cp .env.example .env.local
+npm install
 npm run dev -- --host
 ```
 
-### 3. Streamlit app (if used in your branch)
-```bash
-cd /home/zennakamura/MasterResearch/hsi_water_detection_app
-python -m streamlit run ./src/hsi_water_detection_app/app.py
-```
+## Public deployment files added
 
-## Frozen production-candidate artifacts
+- `frontend/.env.example`
+- `frontend/.env.production.example`
+- `frontend/netlify.toml`
+- `backend/.env.example`
+- `render.yaml`
+- `configs/deploy/hypersigma_v3_calibrated_web.json`
 
-The current GUI production-candidate freeze is documented through:
+## Important constraints
 
-- `experiments/eval_v3/release_freeze.json`
-- `experiments/eval_v3/release_verification.json`
-- `experiments/eval_v3/runtime_versions.json`
-- `experiments/eval_v3/gui_acceptance_result.json`
-- `experiments/eval_v3/deploy_consistency_audit.json`
-- `docs/final_hypersigma_gui_handover.md`
+- The backend can now boot without immediately resolving the external HyperSIGMA repository, but real inference still requires mounted runtime model assets.
+- The default public mode disables server-side file paths and deploy-config overrides.
+- The current HyperSIGMA public demo path is still CPU/GPU environment sensitive because it depends on external upstream weights and a large fine-tuned checkpoint.
 
-## Research highlights so far
+## Core documents
 
-### Data pipeline
-- Source of truth moved from older ROI-centric labeling to `confidence_ali.tif`
-- Patch manifest regenerated from raster truth
-- v3 dataset uses **spatial block split** with `block_size=224`
-- Leakage was reduced relative to earlier dataset versions
-
-### Model evaluation
-- Baseline remains an important reference path
-- HyperSIGMA experiments E01 / E02 / E05 / E07 / E09 were organized and ranked
-- `E02_head_only_posw_v3_block224` is the current best HyperSIGMA run for GUI deployment
-- Calibration was added with validation-only temperature scaling
-
-### Deployment / GUI integration
-- GUI, backend, CLI, and metadata now resolve from a single deploy config
-- Provenance is persisted in API responses and saved output metadata
-- GPU execution was verified in the acceptance path
-- The release candidate was frozen with a tagged Git commit
-
-## Known limitations
-
-- Dataset size is still small, so split policy strongly affects results
-- HyperSIGMA score collapse required explicit calibration handling
-- Baseline is currently a reference path and not the main GUI default inference route
-- Frontend and backend should continue to be tested whenever deploy defaults are changed
-
-## Recommended next work
-
-1. Add a baseline GUI inference path alongside HyperSIGMA
-2. Improve calibration beyond single-temperature scaling
-3. Strengthen spatial split policy and leakage controls further
-4. Add explicit score-collapse diagnostics to training/evaluation
-5. Revisit threshold policy for more stable operating points
-
-## Citation
-
-If you use HyperSIGMA itself, cite the original HyperSIGMA paper and repository. The upstream project README is included in the repository history and was used as the foundation model reference during this integration work.
+- [GUI inference contract](docs/gui_inference_contract.md)
+- [Runtime modes](docs/runtime_modes.md)
+- [Research pipeline](docs/research_pipeline.md)
+- [Model card: HyperSIGMA v3 calibrated](docs/model_card_hypersigma_v3_calibrated.md)
