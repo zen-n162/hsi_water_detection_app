@@ -1,0 +1,18 @@
+{
+  "runs": [
+    {
+      "seed": 13,
+      "model_checkpoint": "experiments/runs_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed13/E02_head_only_posw_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed13/model_best.pt",
+      "temperature_json": "experiments/runs_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed13/E02_head_only_posw_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed13/temperature_scaling_val.json",
+      "threshold_json": "experiments/eval_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed13/E02_head_only_posw_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed13_best_val_threshold.json",
+      "note": "area_cap_20 exhaustive full-scene map candidate; seed13 is the lower-saturation case"
+    },
+    {
+      "seed": 99,
+      "model_checkpoint": "experiments/runs_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed99/E02_head_only_posw_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed99/model_best.pt",
+      "temperature_json": "experiments/runs_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed99/E02_head_only_posw_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed99/temperature_scaling_val.json",
+      "threshold_json": "experiments/eval_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed99/E02_head_only_posw_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed99_best_val_threshold.json",
+      "note": "area_cap_20 exhaustive full-scene map candidate; seed99 is the first operating candidate"
+    }
+  ]
+}
