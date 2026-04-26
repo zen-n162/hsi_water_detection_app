@@ -1,0 +1,22 @@
+{
+  "runs": [
+    {
+      "seed": 42,
+      "model_checkpoint": "experiments/runs_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed42/baseline_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed42/model_best.pt",
+      "threshold_json": "experiments/eval_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed42/baseline_best_val_threshold.json",
+      "note": "baseline stress-selected full-scene sanity; matched to HyperSIGMA seeds 42, 13, 99"
+    },
+    {
+      "seed": 13,
+      "model_checkpoint": "experiments/runs_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed13/baseline_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed13/model_best.pt",
+      "threshold_json": "experiments/eval_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed13/baseline_best_val_threshold.json",
+      "note": "baseline stress-selected full-scene sanity; matched to HyperSIGMA seeds 42, 13, 99"
+    },
+    {
+      "seed": 99,
+      "model_checkpoint": "experiments/runs_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed99/baseline_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed99/model_best.pt",
+      "threshold_json": "experiments/eval_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed99/baseline_best_val_threshold.json",
+      "note": "baseline stress-selected full-scene sanity; matched to HyperSIGMA seeds 42, 13, 99"
+    }
+  ]
+}

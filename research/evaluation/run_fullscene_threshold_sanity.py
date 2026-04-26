@@ -669,13 +669,14 @@ def _write_summary(rows: list[dict[str, Any]], output_dir: Path) -> None:
 
     flat_rows: list[dict[str, Any]] = []
     for row in rows:
-        for mode in ["raw", "calibrated"]:
+        for mode in [name for name in ("raw", "calibrated") if name in row]:
             mode_obj = row[mode]
             dist = mode_obj["score_distribution"]
             for policy, metrics in mode_obj["thresholds"].items():
                 random_baseline = metrics.get("random_same_area_baseline") or {}
                 flat_rows.append(
                     {
+                        "model": row.get("model_name", "hypersigma"),
                         "seed": row["seed"],
                         "mode": mode,
                         "policy": policy,
@@ -707,8 +708,10 @@ def _write_summary(rows: list[dict[str, Any]], output_dir: Path) -> None:
                         "area_caps": ",".join(str(x) for x in row.get("area_caps", [])),
                     }
                 )
+    if not flat_rows:
+        raise RuntimeError("No summary rows were produced")
     with csv_path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=list(flat_rows[0].keys()))
+        writer = csv.DictWriter(f, fieldnames=list(flat_rows[0].keys()), lineterminator="\n")
         writer.writeheader()
         writer.writerows(flat_rows)
     print(f"[INFO] saved {json_path}")

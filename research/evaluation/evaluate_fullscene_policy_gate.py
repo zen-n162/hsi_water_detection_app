@@ -64,7 +64,7 @@ def _write_markdown(summary: dict[str, Any], output_md: Path) -> None:
     lines = [
         "# Full-scene Threshold Policy Gate",
         "",
-        "This gate evaluates sampled full-scene predicted-positive-rate stability across selected HyperSIGMA seeds.",
+        "This gate evaluates sampled full-scene predicted-positive-rate stability across selected seeds.",
         "",
         "| mode | policy | pred_pos_rate min | max | range | mean | F1 mean | random F1 | F1-random | extreme? | pass stability | pass cap |",
         "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
