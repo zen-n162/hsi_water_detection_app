@@ -1,0 +1,164 @@
+{
+  "rows": [
+    {
+      "seed": "13",
+      "mode": "raw",
+      "policy": "area_cap_15_exact_rank",
+      "target_positive_rate": 0.15,
+      "predicted_positive_rate": 0.15000111599669666,
+      "f1": 0.08696091814550787,
+      "precision": 0.06398333457332044,
+      "recall": 0.13568949195329758,
+      "random_f1_mean": 0.09673454168562617,
+      "random_f1_std": 0.0029263613200133476,
+      "f1_minus_random_mean": -0.009773623540118306,
+      "confusion_matrix": [
+        [
+          70687,
+          12581
+        ],
+        [
+          5478,
+          860
+        ]
+      ]
+    },
+    {
+      "seed": "13",
+      "mode": "raw",
+      "policy": "area_cap_20_exact_rank",
+      "target_positive_rate": 0.2,
+      "predicted_positive_rate": 0.1999977680066067,
+      "f1": 0.09225442103961416,
+      "precision": 0.062440712013838516,
+      "recall": 0.17655411801830231,
+      "random_f1_mean": 0.10513623809720105,
+      "random_f1_std": 0.002393839539782429,
+      "f1_minus_random_mean": -0.012881817057586883,
+      "confusion_matrix": [
+        [
+          66466,
+          16802
+        ],
+        [
+          5219,
+          1119
+        ]
+      ]
+    },
+    {
+      "seed": "42",
+      "mode": "raw",
+      "policy": "area_cap_15_exact_rank",
+      "target_positive_rate": 0.15,
+      "predicted_positive_rate": 0.15000111599669666,
+      "f1": 0.08594974467869962,
+      "precision": 0.06323934231083997,
+      "recall": 0.13411170716314294,
+      "random_f1_mean": 0.09634271196723798,
+      "random_f1_std": 0.002889178736237463,
+      "f1_minus_random_mean": -0.010392967288538363,
+      "confusion_matrix": [
+        [
+          70677,
+          12591
+        ],
+        [
+          5488,
+          850
+        ]
+      ]
+    },
+    {
+      "seed": "42",
+      "mode": "raw",
+      "policy": "area_cap_20_exact_rank",
+      "target_positive_rate": 0.2,
+      "predicted_positive_rate": 0.1999977680066067,
+      "f1": 0.11030957582752793,
+      "precision": 0.07466101222030021,
+      "recall": 0.21110760492268854,
+      "random_f1_mean": 0.10447282451873532,
+      "random_f1_std": 0.002099541363502034,
+      "f1_minus_random_mean": 0.005836751308792604,
+      "confusion_matrix": [
+        [
+          66685,
+          16583
+        ],
+        [
+          5000,
+          1338
+        ]
+      ]
+    },
+    {
+      "seed": "99",
+      "mode": "raw",
+      "policy": "area_cap_15_exact_rank",
+      "target_positive_rate": 0.15,
+      "predicted_positive_rate": 0.15000111599669666,
+      "f1": 0.18039334647858837,
+      "precision": 0.13272821962651588,
+      "recall": 0.2814768065635847,
+      "random_f1_mean": 0.09613415743970878,
+      "random_f1_std": 0.0028747101445836796,
+      "f1_minus_random_mean": 0.08425918903887959,
+      "confusion_matrix": [
+        [
+          71611,
+          11657
+        ],
+        [
+          4554,
+          1784
+        ]
+      ]
+    },
+    {
+      "seed": "99",
+      "mode": "raw",
+      "policy": "area_cap_20_exact_rank",
+      "target_positive_rate": 0.2,
+      "predicted_positive_rate": 0.1999977680066067,
+      "f1": 0.15713755719526776,
+      "precision": 0.10635567211651135,
+      "recall": 0.30072578100347114,
+      "random_f1_mean": 0.10439939816150708,
+      "random_f1_std": 0.002714968780360969,
+      "f1_minus_random_mean": 0.05273815903376068,
+      "confusion_matrix": [
+        [
+          67253,
+          16015
+        ],
+        [
+          4432,
+          1906
+        ]
+      ]
+    }
+  ],
+  "summary": [
+    {
+      "policy": "area_cap_15_exact_rank",
+      "seeds": "13,42,99",
+      "predicted_positive_rate_mean": 0.15000111599669666,
+      "predicted_positive_rate_std": 0.0,
+      "f1_mean": 0.11776800310093195,
+      "f1_std": 0.044284729067117674,
+      "random_f1_mean": 0.09640380369752431,
+      "f1_minus_random_mean": 0.02136419940340764
+    },
+    {
+      "policy": "area_cap_20_exact_rank",
+      "seeds": "13,42,99",
+      "predicted_positive_rate_mean": 0.1999977680066067,
+      "predicted_positive_rate_std": 0.0,
+      "f1_mean": 0.11990051802080329,
+      "f1_std": 0.027342823171286133,
+      "random_f1_mean": 0.10466948692581449,
+      "f1_minus_random_mean": 0.0152310310949888
+    }
+  ]
+}

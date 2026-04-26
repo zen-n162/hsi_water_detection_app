@@ -1,0 +1,136 @@
+{
+  "policy_summaries": [
+    {
+      "mode": "raw",
+      "policy": "area_cap_15",
+      "seeds": [
+        "42",
+        "13",
+        "99"
+      ],
+      "target_positive_rate_mean": 0.15,
+      "predicted_positive_rate_min": 0.10859763855098989,
+      "predicted_positive_rate_max": 0.14764636296676562,
+      "predicted_positive_rate_mean": 0.128972018242826,
+      "predicted_positive_rate_std": 0.01598683434984035,
+      "predicted_positive_rate_range": 0.039048724415775726,
+      "f1_mean": 0.11061787201311354,
+      "f1_std": 0.05089652891366891,
+      "random_f1_mean": 0.09132530413535736,
+      "f1_minus_random_mean": 0.019292567877756184,
+      "has_extreme_positive_rate": false,
+      "passes_positive_rate_stability": true,
+      "passes_area_cap": true
+    },
+    {
+      "mode": "raw",
+      "policy": "area_cap_20",
+      "seeds": [
+        "42",
+        "13",
+        "99"
+      ],
+      "target_positive_rate_mean": 0.2,
+      "predicted_positive_rate_min": 0.17626051826886593,
+      "predicted_positive_rate_max": 0.1999084882708747,
+      "predicted_positive_rate_mean": 0.1891205202032602,
+      "predicted_positive_rate_std": 0.009764787574504233,
+      "predicted_positive_rate_range": 0.023647970002008772,
+      "f1_mean": 0.11650401096294564,
+      "f1_std": 0.028414181379882757,
+      "random_f1_mean": 0.10306158158021582,
+      "f1_minus_random_mean": 0.01344242938272982,
+      "has_extreme_positive_rate": false,
+      "passes_positive_rate_stability": true,
+      "passes_area_cap": true
+    },
+    {
+      "mode": "raw",
+      "policy": "fixed_0_5",
+      "seeds": [
+        "42",
+        "13",
+        "99"
+      ],
+      "target_positive_rate_mean": null,
+      "predicted_positive_rate_min": 0.0,
+      "predicted_positive_rate_max": 0.0,
+      "predicted_positive_rate_mean": 0.0,
+      "predicted_positive_rate_std": 0.0,
+      "predicted_positive_rate_range": 0.0,
+      "f1_mean": 0.0,
+      "f1_std": 0.0,
+      "random_f1_mean": 0.0,
+      "f1_minus_random_mean": 0.0,
+      "has_extreme_positive_rate": true,
+      "passes_positive_rate_stability": false,
+      "passes_area_cap": true
+    },
+    {
+      "mode": "raw",
+      "policy": "prior_aware_train_prevalence",
+      "seeds": [
+        "42",
+        "13",
+        "99"
+      ],
+      "target_positive_rate_mean": 0.5335945227052306,
+      "predicted_positive_rate_min": 0.502577952369261,
+      "predicted_positive_rate_max": 0.5338146999084883,
+      "predicted_positive_rate_mean": 0.514619556726112,
+      "predicted_positive_rate_std": 0.013718927011093772,
+      "predicted_positive_rate_range": 0.03123674753922734,
+      "f1_mean": 0.1506909089001404,
+      "f1_std": 0.0010658128886376806,
+      "random_f1_mean": 0.1245496973510969,
+      "f1_minus_random_mean": 0.026141211549043485,
+      "has_extreme_positive_rate": false,
+      "passes_positive_rate_stability": true,
+      "passes_area_cap": true
+    },
+    {
+      "mode": "raw",
+      "policy": "val_f1_tuned",
+      "seeds": [
+        "42",
+        "13",
+        "99"
+      ],
+      "target_positive_rate_mean": null,
+      "predicted_positive_rate_min": 1.0,
+      "predicted_positive_rate_max": 1.0,
+      "predicted_positive_rate_mean": 1.0,
+      "predicted_positive_rate_std": 0.0,
+      "predicted_positive_rate_range": 0.0,
+      "f1_mean": 0.13211873592929207,
+      "f1_std": 0.0,
+      "random_f1_mean": 0.1321187359292921,
+      "f1_minus_random_mean": -2.7755575615628914e-17,
+      "has_extreme_positive_rate": true,
+      "passes_positive_rate_stability": false,
+      "passes_area_cap": true
+    },
+    {
+      "mode": "raw",
+      "policy": "validation_prevalence_target",
+      "seeds": [
+        "42",
+        "13",
+        "99"
+      ],
+      "target_positive_rate_mean": 0.5,
+      "predicted_positive_rate_min": 0.4843202464120706,
+      "predicted_positive_rate_max": 0.4980581657478294,
+      "predicted_positive_rate_mean": 0.4901606291245378,
+      "predicted_positive_rate_std": 0.005794049739665052,
+      "predicted_positive_rate_range": 0.013737919335758797,
+      "f1_mean": 0.14924393872531672,
+      "f1_std": 0.0010936727556214911,
+      "random_f1_mean": 0.12366856793217673,
+      "f1_minus_random_mean": 0.025575370793139995,
+      "has_extreme_positive_rate": false,
+      "passes_positive_rate_stability": true,
+      "passes_area_cap": true
+    }
+  ]
+}

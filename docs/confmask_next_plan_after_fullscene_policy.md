@@ -51,6 +51,14 @@ The baseline matched-seed check is now complete for the same `42`, `13`, `99` sa
 
 Baseline uses one scalar score per patch, so small area caps can collapse to zero positives when score ties are coarse. Even with this caveat, the current evidence does not show a baseline localization advantage over HyperSIGMA.
 
+The larger 256-patch rerun focused on `area_cap_15` and `area_cap_20`:
+
+- `area_cap_15`: HyperSIGMA F1 `0.1285`, baseline F1 `0.1106`, delta `+0.0179`
+- `area_cap_20`: HyperSIGMA F1 `0.1425`, baseline F1 `0.1165`, delta `+0.0260`
+- exact-rank baseline correction still leaves HyperSIGMA ahead: `0.1285 vs 0.1178` at `area_cap_15`, and `0.1424 vs 0.1199` at `area_cap_20`
+
+Overlay summaries show HyperSIGMA has slightly better precision/recall than baseline, but precision remains around `0.095`, so full-scene localization is still weak in absolute terms.
+
 ## Decision
 
 Do not run `E03_head_only_confidence_bce` yet.
@@ -61,17 +69,17 @@ Do not promote to GUI / production yet.
 
 ## Next Work Plan
 
-1. Increase full-scene sample size for the selected policies.
-   Rerun HyperSIGMA and baseline checks with `192` or `256` sampled patches, focusing on `area_cap_15` and `area_cap_20`. This reduces noise in the localization estimate before changing training.
+1. Build a post-processing diagnostic around `area_cap_20`.
+   Test simple spatial filters on sampled/full-scene score maps: connected-component minimum size, valid-mask erosion, local wetness prior exclusion, and score percentile within local neighborhoods. The goal is to reduce dry-region contamination without retraining.
 
-2. Render and inspect selected-area overlays.
-   Use the existing overlay renderer for `area_cap_15` and `area_cap_20`, then check whether selected pixels cluster on plausible wet structures or simply track broad scene artifacts.
+2. Move from sampled overlays to a full-scene or denser-stride overlay for the best seed.
+   The sampled overlay is enough for comparison, but final operating-policy decisions need a continuous map. Start with seed99 and `area_cap_20`, then compare seed13 as the lower-saturation candidate.
 
-3. Improve the baseline comparator if needed.
-   The current baseline is patch-scalar and coarse. If it remains part of the argument, add a patch-score smoothing or stride-reduced baseline map so area caps do not collapse at small rates because of ties.
+3. Quantify label-noise sensitivity.
+   Repeat evaluation with tier1+tier2 only versus tier1+tier2+tier3 wet labels. If much of the gain comes from tier3 weak labels, treat precision targets separately for strict and weak wetness.
 
-4. Then decide whether to run `E03_head_only_confidence_bce`.
-   Run it only if higher-sample overlays show HyperSIGMA remains weak or seed-unstable even when baseline/coarse-score limitations are accounted for.
+4. Then decide whether to train `E03_head_only_confidence_bce`.
+   Run it only if post-processing and label-strictness checks cannot lift full-scene precision/recall meaningfully, or if the model's selected regions remain visually inconsistent across seeds.
 
 ## Suggested Commands
 
