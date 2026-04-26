@@ -1,0 +1,44 @@
+{
+  "deploy_name": "hypersigma_confmask_thr008_splitquality_stress_seed7_best_f1",
+  "deploy_config_version": 1,
+  "runtime_profile": "local_research_candidate",
+  "run_name": "E02_head_only_posw_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed7",
+  "manifest_path": "annotations/manifests/split_quality_stress/thr008_stress_c24_r1024_constrained_base7_cand16.csv",
+  "dataset_path": "datasets/processed/wetness_pretrain_confmask_gb32_thr008_splitquality_stress_seed7",
+  "model_type": "ss",
+  "model_checkpoint": "experiments/runs_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed7/E02_head_only_posw_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed7/model_best.pt",
+  "temperature_json": "experiments/runs_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed7/E02_head_only_posw_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed7/temperature_scaling_val.json",
+  "threshold": 0.47247136347871405,
+  "patch_size": 64,
+  "stride": 32,
+  "band_count": 170,
+  "sensor": "hyperion",
+  "split_policy": "spatial_block(block_size=224, guard_band=32, split_quality=stress_c24_r1024_constrained, seed=7, wet_ratio_valid>=0.08)",
+  "created_from_summary_path": "experiments/eval_confmask_thr008_splitquality_stress_repeat/split_repeat_summary_5seed.json",
+  "created_from": {
+    "split_repeat_summary": "experiments/eval_confmask_thr008_splitquality_stress_repeat/split_repeat_summary_5seed.json",
+    "stress_selected_splits": "experiments/eval_confmask_split_quality_stress/thr008_stress_c24_r1024_selected_splits.json",
+    "threshold_json": "experiments/eval_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed7/E02_head_only_posw_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed7_best_val_threshold.json",
+    "val_metrics_raw": "experiments/eval_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed7/E02_head_only_posw_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed7_val_metrics_raw.json",
+    "val_metrics_calibrated": "experiments/eval_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed7/E02_head_only_posw_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed7_val_metrics_calibrated.json",
+    "test_metrics_raw": "experiments/eval_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed7/E02_head_only_posw_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed7_test_metrics_raw.json",
+    "test_metrics_calibrated": "experiments/eval_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed7/E02_head_only_posw_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed7_test_metrics_calibrated.json"
+  },
+  "evaluation": {
+    "selection_basis": "Highest calibrated validation-tuned HyperSIGMA test F1 in the stress-selected five-seed repeat. This is a tiny-test F1 profile and is provided alongside the seed13 balanced-ranking GUI profile.",
+    "seed": 7,
+    "patch_level": {
+      "threshold_policy": "val_f1_tuned",
+      "test_roc_auc": 0.6875,
+      "test_pr_auc": 0.6458333333333333,
+      "test_f1": 0.8,
+      "test_oracle_f1": 0.8,
+      "transfer_gap": 0.0
+    },
+    "calibration": {
+      "method": "validation_only_temperature_scaling",
+      "best_temperature": 6.753088798531287
+    }
+  },
+  "notes": "Research-only GUI trial profile for the highest-F1 HyperSIGMA confmask checkpoint. It intentionally does not replace the frozen hypersigma_v3_calibrated production-candidate profile."
+}

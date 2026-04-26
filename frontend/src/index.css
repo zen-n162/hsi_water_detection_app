@@ -55,6 +55,17 @@ input, select {
   line-height: 1.1;
 }
 
+.app-banner {
+  max-width: 1180px;
+  margin: 0 auto 16px;
+  border: 1px solid #5a6f96;
+  background: rgba(22, 37, 64, 0.78);
+  border-radius: 12px;
+  color: #d9e5ff;
+  line-height: 1.5;
+  padding: 12px 16px;
+}
+
 .workspace-layout {
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
@@ -74,6 +85,7 @@ input, select {
 .model-info,
 .page-section,
 .result-card,
+.evaluation-panel,
 .empty-panel {
   border: 1px solid #394154;
   background: rgba(10, 13, 22, 0.76);
@@ -196,7 +208,17 @@ input, select {
   align-items: center;
 }
 
-.roi-canvas img {
+.roi-image-frame {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  max-height: 80vh;
+  line-height: 0;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.roi-image-frame img {
   max-width: 100%;
   max-height: 80vh;
   display: block;
@@ -208,6 +230,7 @@ input, select {
   position: absolute;
   border: 2px dashed #ffffff;
   box-shadow: 0 0 0 9999px rgba(0,0,0,0.1) inset;
+  pointer-events: none;
 }
 
 .roi-meta {
@@ -244,6 +267,170 @@ input, select {
   border: 1px solid #3b4252;
 }
 
+.detection-card-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 112px;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.detection-card-layout img,
+.detection-card-layout .empty-panel {
+  min-width: 0;
+}
+
+.detection-legend {
+  border: 1px solid #394154;
+  background: rgba(20, 28, 44, 0.74);
+  border-radius: 8px;
+  padding: 8px;
+  display: grid;
+  grid-template-rows: auto minmax(128px, 1fr) auto auto;
+  gap: 8px;
+  color: #c6d1e2;
+}
+
+.legend-title {
+  color: #e8eefc;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.legend-scale-row {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 8px;
+  min-height: 128px;
+}
+
+.legend-ramp {
+  border: 1px solid #4a5368;
+  border-radius: 6px;
+  background: linear-gradient(
+    to top,
+    #440154 0%,
+    #31688e 34%,
+    #35b779 68%,
+    #fde725 100%
+  );
+}
+
+.legend-labels {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.legend-labels span,
+.legend-swatches div,
+.legend-note {
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.legend-swatches {
+  display: grid;
+  gap: 5px;
+}
+
+.legend-swatches div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: #b7c2d6;
+}
+
+.legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  flex: 0 0 auto;
+}
+
+.legend-swatch.high {
+  background: #fde725;
+}
+
+.legend-swatch.mid {
+  background: #35b779;
+}
+
+.legend-swatch.low {
+  background: #440154;
+}
+
+.legend-swatch.outside {
+  background: #000000;
+}
+
+.legend-swatch.truth-wet {
+  background: #00dbff;
+}
+
+.legend-swatch.truth-dry {
+  background: #4d6b94;
+}
+
+.truth-legend {
+  grid-template-rows: auto auto;
+  align-content: start;
+}
+
+.truth-swatches {
+  gap: 8px;
+}
+
+.legend-note {
+  color: #9eabc2;
+}
+
+.evaluation-panel {
+  margin-top: 14px;
+  padding: 12px;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.metric-grid div {
+  border: 1px solid #394154;
+  border-radius: 8px;
+  background: rgba(20, 28, 44, 0.72);
+  min-height: 70px;
+  padding: 10px;
+  display: grid;
+  align-content: space-between;
+}
+
+.metric-grid strong {
+  color: #aab5ca;
+  font-size: 12px;
+}
+
+.metric-grid span {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.metric-meta {
+  margin-top: 10px;
+  color: #c6d1e2;
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.metric-meta a {
+  color: #a9c2ff;
+}
+
 .empty-panel {
   min-height: 240px;
   display: grid;
@@ -260,5 +447,41 @@ input, select {
 
   .results-grid {
     grid-template-columns: 1fr;
+  }
+
+  .metric-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .detection-card-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .detection-legend {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto;
+    align-items: center;
+  }
+
+  .legend-scale-row {
+    grid-template-columns: minmax(120px, 1fr);
+    min-height: 18px;
+  }
+
+  .legend-ramp {
+    min-height: 18px;
+    background: linear-gradient(
+      to right,
+      #440154 0%,
+      #31688e 34%,
+      #35b779 68%,
+      #fde725 100%
+    );
+  }
+
+  .legend-labels {
+    display: none;
   }
 }

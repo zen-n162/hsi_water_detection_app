@@ -12,6 +12,7 @@ os.environ.setdefault("XDG_CACHE_HOME", "/tmp/xdg-cache")
 import matplotlib.pyplot as plt
 import numpy as np
 
+from backend.app.services.deploy_config_service import load_deploy_config_bundle, to_safe_path_label
 from backend.app.settings import get_settings
 from hsi_water_detection_app.config import HYPERION_BAD_BANDS_0BASED
 from hsi_water_detection_app.data.loader import (
@@ -27,11 +28,26 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 def to_public_url(path: Path) -> str:
     settings = get_settings()
     rel = path.resolve().relative_to(settings.output_root.resolve())
-    return f"{settings.output_url_prefix}/{rel.as_posix()}"
+    public_path = f"{settings.output_url_prefix}/{rel.as_posix()}"
+    if settings.public_base_url:
+        return f"{settings.public_base_url}{public_path}"
+    return public_path
 
 
-def _normalize01(arr: np.ndarray) -> np.ndarray:
+def _normalize01(arr: np.ndarray, valid_mask: np.ndarray | None = None) -> np.ndarray:
     arr = arr.astype(np.float32, copy=False)
+    if valid_mask is not None:
+        valid = np.asarray(valid_mask, dtype=bool) & np.isfinite(arr)
+        out = np.zeros_like(arr, dtype=np.float32)
+        if not np.any(valid):
+            return out
+        amin = np.nanmin(arr[valid])
+        amax = np.nanmax(arr[valid])
+        if np.isclose(amin, amax):
+            return out
+        out[valid] = (arr[valid] - amin) / (amax - amin)
+        return out
+
     amin = np.nanmin(arr)
     amax = np.nanmax(arr)
     if np.isclose(amin, amax):
@@ -186,11 +202,20 @@ def make_probability_png(
     *,
     prob_map_npy: Path,
     out_png: Path,
+    valid_mask_npy: Path | None = None,
 ):
     arr = np.load(prob_map_npy)
-    arr = _normalize01(arr)
+    valid_mask = _load_valid_mask(valid_mask_npy, target_shape=arr.shape)
+    arr = _normalize01(arr, valid_mask=valid_mask)
     out_png.parent.mkdir(parents=True, exist_ok=True)
-    plt.imsave(out_png, arr, cmap="viridis", vmin=0.0, vmax=1.0)
+    if valid_mask is None:
+        plt.imsave(out_png, arr, cmap="viridis", vmin=0.0, vmax=1.0)
+        return
+
+    rgba = plt.cm.viridis(arr)
+    rgba[~valid_mask, :3] = 0.0
+    rgba[~valid_mask, 3] = 1.0
+    plt.imsave(out_png, rgba)
 
 
 def make_probability_overlay_png(
@@ -199,12 +224,14 @@ def make_probability_overlay_png(
     pseudocolor_png: Path,
     out_png: Path,
     alpha: float = 0.45,
+    valid_mask_npy: Path | None = None,
 ):
     if not prob_map_npy.exists() or not pseudocolor_png.exists():
         return
 
     prob = np.load(prob_map_npy).astype(np.float32)
-    prob = _normalize01(prob)
+    valid_mask = _load_valid_mask(valid_mask_npy, target_shape=prob.shape)
+    prob = _normalize01(prob, valid_mask=valid_mask)
 
     base = plt.imread(pseudocolor_png).astype(np.float32)
     if base.ndim == 2:
@@ -221,9 +248,49 @@ def make_probability_overlay_png(
 
     overlay = (1.0 - alpha) * base + alpha * heat
     overlay = np.clip(overlay, 0.0, 1.0)
+    if valid_mask is not None:
+        overlay[~valid_mask] = 0.0
 
     out_png.parent.mkdir(parents=True, exist_ok=True)
     plt.imsave(out_png, overlay)
+
+
+def make_label_png(
+    *,
+    label: np.ndarray,
+    out_png: Path,
+    valid_mask: np.ndarray | None = None,
+):
+    label = np.asarray(label)
+    if label.ndim != 2:
+        raise ValueError(f"Expected 2D label array for visualization, got shape={label.shape}")
+
+    valid = np.isfinite(label) & (label != 255)
+    if valid_mask is not None:
+        valid_mask = np.asarray(valid_mask, dtype=bool)
+        if valid_mask.shape != label.shape:
+            raise ValueError(f"Mask shape mismatch: mask={valid_mask.shape} label={label.shape}")
+        valid &= valid_mask
+
+    wet = valid & (label > 0)
+    dry = valid & (label == 0)
+
+    rgba = np.zeros((*label.shape, 4), dtype=np.float32)
+    rgba[..., 3] = 1.0
+    rgba[dry, :3] = np.array([0.30, 0.42, 0.58], dtype=np.float32)
+    rgba[wet, :3] = np.array([0.00, 0.86, 1.00], dtype=np.float32)
+
+    out_png.parent.mkdir(parents=True, exist_ok=True)
+    plt.imsave(out_png, rgba)
+
+
+def _load_valid_mask(valid_mask_npy: Path | None, *, target_shape: tuple[int, int]) -> np.ndarray | None:
+    if valid_mask_npy is None or not valid_mask_npy.exists():
+        return None
+    valid_mask = np.load(valid_mask_npy).astype(bool)
+    if valid_mask.shape != target_shape:
+        raise ValueError(f"Mask shape mismatch: mask={valid_mask.shape} target={target_shape}")
+    return valid_mask
 
 
 def _resolve_preview_band(
@@ -263,6 +330,11 @@ def build_grayscale_preview(
     xmax: float | None,
     ymax: float | None,
 ):
+    settings = get_settings()
+    if settings.is_external_web_mode:
+        deploy_bundle = load_deploy_config_bundle()
+        sensor = str(deploy_bundle["resolved"].get("sensor") or sensor)
+
     sensor = _infer_sensor(sensor, input_path)
 
     cube, meta = _load_cube_and_meta(
@@ -298,8 +370,8 @@ def build_grayscale_preview(
 
     band_img = _stretch_band(cube[band_idx])
 
-    settings = get_settings()
-    outdir = settings.output_root / "preview_ui" / datetime.now().strftime("%Y-%m-%d_%H%M%S_%f")
+    preview_root = settings.output_root if settings.output_root.name == "preview_ui" else settings.output_root / "preview_ui"
+    outdir = preview_root / datetime.now().strftime("%Y-%m-%d_%H%M%S_%f")
     outdir.mkdir(parents=True, exist_ok=True)
 
     png_path = outdir / "grayscale_preview.png"
@@ -310,7 +382,6 @@ def build_grayscale_preview(
     result = {
         "ok": True,
         "sensor": sensor,
-        "input_path": str(input_path),
         "preview_band_index": int(band_idx),
         "preview_band": int(band_idx),  # 互換用
         "preview_wavelength_nm": band_wavelength,
@@ -325,13 +396,6 @@ def build_grayscale_preview(
         "grayscale_preview_url": public_png_url,
         "preview_url": public_png_url,
         "grayscale_url": public_png_url,
-
-        "files": {
-            "grayscale_preview_png": str(png_path),
-        },
-        "urls": {
-            "grayscale_preview_png": public_png_url,
-        },
         "meta": {
             "crs": meta.get("crs"),
             "transform": meta.get("transform"),
@@ -339,9 +403,20 @@ def build_grayscale_preview(
         },
     }
 
-    (outdir / "preview_result.json").write_text(
-        json.dumps(result, indent=2, ensure_ascii=False),
-        encoding="utf-8",
-    )
+    if not settings.is_external_web_mode:
+        result["input_path"] = str(input_path)
+        result["output_dir"] = str(outdir)
+        result["files"] = {
+            "grayscale_preview_png": str(png_path),
+        }
+        result["urls"] = {
+            "grayscale_preview_png": public_png_url,
+        }
+        (outdir / "preview_result.json").write_text(
+            json.dumps(result, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+    else:
+        result["output_dir"] = to_safe_path_label(outdir)
 
     return result

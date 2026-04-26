@@ -7,10 +7,12 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 BACKEND_ROOT = PROJECT_ROOT / "backend"
-DEFAULT_LOCAL_DEPLOY_CONFIG = "configs/deploy/hypersigma_v3_calibrated.json"
+DEFAULT_LOCAL_DEPLOY_CONFIG = "configs/deploy/hypersigma_confmask_thr008_splitquality_stress_seed13.json"
 DEFAULT_PUBLIC_DEPLOY_CONFIG = "configs/deploy/hypersigma_v3_calibrated_web.json"
+DEFAULT_LOCAL_GPU_WEB_DEPLOY_CONFIG = "configs/deploy/hypersigma_v3_local_gpu_web.json"
 DEFAULT_LOCAL_OUTPUT_ROOT = "outputs"
 DEFAULT_PUBLIC_OUTPUT_ROOT = "runtime/outputs"
+DEFAULT_LOCAL_GPU_WEB_OUTPUT_ROOT = "outputs/web_ui"
 
 
 def _clean_env(value: str | None) -> str | None:
@@ -68,6 +70,8 @@ def _env_first(*keys: str) -> str | None:
 
 def _normalize_app_mode(value: str | None) -> str:
     cleaned = (_clean_env(value) or "local").lower()
+    if cleaned in {"local_gpu_web", "local-gpu-web", "gpu_web", "gpu-web"}:
+        return "local_gpu_web"
     if cleaned in {"public", "prod", "production", "web"}:
         return "public"
     return "local"
@@ -81,12 +85,16 @@ def _resolve_project_path(value: str | Path) -> Path:
 
 
 def _default_deploy_config(app_mode: str) -> str:
+    if app_mode == "local_gpu_web":
+        return DEFAULT_LOCAL_GPU_WEB_DEPLOY_CONFIG
     if app_mode == "public":
         return DEFAULT_PUBLIC_DEPLOY_CONFIG
     return DEFAULT_LOCAL_DEPLOY_CONFIG
 
 
 def _default_output_root(app_mode: str) -> str:
+    if app_mode == "local_gpu_web":
+        return DEFAULT_LOCAL_GPU_WEB_OUTPUT_ROOT
     if app_mode == "public":
         return DEFAULT_PUBLIC_OUTPUT_ROOT
     return DEFAULT_LOCAL_OUTPUT_ROOT
@@ -100,6 +108,8 @@ class AppSettings:
     default_deploy_config: Path
     output_root: Path
     output_url_prefix: str
+    public_base_url: str | None
+    default_device: str
     cors_allow_origins: list[str]
     cors_allow_credentials: bool
     allow_server_file_paths: bool
@@ -116,6 +126,14 @@ class AppSettings:
     @property
     def is_public_mode(self) -> bool:
         return self.app_mode == "public"
+
+    @property
+    def is_local_gpu_web_mode(self) -> bool:
+        return self.app_mode == "local_gpu_web"
+
+    @property
+    def is_external_web_mode(self) -> bool:
+        return self.app_mode in {"public", "local_gpu_web"}
 
 
 @lru_cache(maxsize=1)
@@ -150,10 +168,17 @@ def get_settings() -> AppSettings:
     if not output_url_prefix.startswith("/"):
         output_url_prefix = f"/{output_url_prefix}"
     output_url_prefix = output_url_prefix.rstrip("/") or "/outputs"
+    public_base_url = _clean_env(os.environ.get("HSI_PUBLIC_BASE_URL"))
+    if public_base_url is not None:
+        public_base_url = public_base_url.rstrip("/")
 
     inference_runtime = (_clean_env(os.environ.get("HSI_INFERENCE_RUNTIME")) or "current").lower()
     if inference_runtime not in {"current", "conda"}:
         inference_runtime = "current"
+
+    default_device = (_clean_env(os.environ.get("HSI_DEFAULT_DEVICE")) or "").lower()
+    if default_device not in {"cpu", "cuda"}:
+        default_device = "cuda" if app_mode == "local_gpu_web" else ("cpu" if app_mode == "public" else "cuda")
 
     threshold_override_raw = _env_first("HSI_THRESHOLD")
     try:
@@ -168,6 +193,8 @@ def get_settings() -> AppSettings:
         default_deploy_config=default_deploy_config,
         output_root=output_root,
         output_url_prefix=output_url_prefix,
+        public_base_url=public_base_url,
+        default_device=default_device,
         cors_allow_origins=cors_allow_origins,
         cors_allow_credentials=_parse_bool(
             os.environ.get("HSI_CORS_ALLOW_CREDENTIALS"),

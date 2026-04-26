@@ -126,6 +126,8 @@ export type InferenceRequest = {
   input_path?: string;
   hsi_file?: File | null;
   wavelength_file?: File | null;
+  label_file?: File | null;
+  mask_file?: File | null;
   model_checkpoint?: string;
   temperature_json?: string;
   threshold?: number;
@@ -140,6 +142,8 @@ export type InferenceRequest = {
 export type InferenceResponse = {
   ok: boolean;
   pseudocolorUrl?: string;
+  labelMapUrl?: string;
+  labelVisualizationError?: string | null;
   probabilityOverlayUrl?: string;
   probabilityMapUrl?: string;
   spatialAttentionUrl?: string;
@@ -157,6 +161,15 @@ export type InferenceResponse = {
   resolvedOutputRoot?: string;
   executedDevice?: string;
   requestedDevice?: string;
+  sensor?: string;
+  provenanceVisibility?: string;
+  modelProvenance?: Record<string, any>;
+  inferenceMask?: Record<string, any> | null;
+  inferenceMaskUrl?: string;
+  inferenceMaskError?: string | null;
+  evaluationMetrics?: Record<string, any> | null;
+  evaluationMetricsUrl?: string;
+  evaluationError?: string | null;
 
   stdout?: string;
   stderr?: string;
@@ -175,6 +188,9 @@ export type DeployConfigResponse = {
     allow_deploy_config_override?: boolean;
     output_root?: string;
     output_url_prefix?: string;
+    public_base_url?: string | null;
+    default_device?: string;
+    provenance_visibility?: string;
   };
 };
 
@@ -249,6 +265,8 @@ export async function runInference(req: InferenceRequest): Promise<InferenceResp
     input_path: req.input_path,
     hsi_file: req.hsi_file ?? undefined,
     wavelength_file: req.wavelength_file ?? undefined,
+    label_file: req.label_file ?? undefined,
+    mask_file: req.mask_file ?? undefined,
     model_checkpoint: req.model_checkpoint,
     temperature_json: req.temperature_json,
     threshold: req.threshold,
@@ -274,6 +292,10 @@ export async function runInference(req: InferenceRequest): Promise<InferenceResp
     pseudocolorUrl: withBase(
       pickFirst(json.pseudocolor_url, json.urls?.pseudocolor_png)
     ),
+    labelMapUrl: withBase(
+      pickFirst(json.label_map_url, json.urls?.label_map_png)
+    ),
+    labelVisualizationError: json.label_visualization_error,
     probabilityOverlayUrl: withBase(
       pickFirst(json.probability_overlay_url, json.urls?.probability_overlay_png)
     ),
@@ -305,6 +327,19 @@ export async function runInference(req: InferenceRequest): Promise<InferenceResp
     resolvedOutputRoot: json.resolved_output_root,
     executedDevice: json.executed_device,
     requestedDevice: json.requested_device,
+    sensor: json.sensor,
+    provenanceVisibility: json.provenance_visibility,
+    modelProvenance: json.model_provenance,
+    inferenceMask: json.inference_mask,
+    inferenceMaskUrl: withBase(
+      pickFirst(json.inference_mask_url, json.urls?.inference_mask_json)
+    ),
+    inferenceMaskError: json.inference_mask_error,
+    evaluationMetrics: json.evaluation_metrics,
+    evaluationMetricsUrl: withBase(
+      pickFirst(json.evaluation_metrics_url, json.urls?.evaluation_metrics_json)
+    ),
+    evaluationError: json.evaluation_error,
     stdout: json.stdout,
     stderr: json.stderr,
     raw: json,

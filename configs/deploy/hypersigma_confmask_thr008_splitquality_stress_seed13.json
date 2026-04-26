@@ -1,0 +1,54 @@
+{
+  "deploy_name": "hypersigma_confmask_thr008_splitquality_stress_seed13",
+  "deploy_config_version": 1,
+  "runtime_profile": "local_research_candidate",
+  "run_name": "E02_head_only_posw_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed13",
+  "manifest_path": "annotations/manifests/split_quality_stress/thr008_stress_c24_r1024_constrained_base13_cand0.csv",
+  "dataset_path": "datasets/processed/wetness_pretrain_confmask_gb32_thr008_splitquality_stress_seed13",
+  "model_type": "ss",
+  "model_checkpoint": "experiments/runs_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed13/E02_head_only_posw_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed13/model_best.pt",
+  "temperature_json": "experiments/runs_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed13/E02_head_only_posw_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed13/temperature_scaling_val.json",
+  "threshold": 0.4483769231023357,
+  "patch_size": 64,
+  "stride": 32,
+  "band_count": 170,
+  "sensor": "hyperion",
+  "split_policy": "spatial_block(block_size=224, guard_band=32, split_quality=stress_c24_r1024_constrained, seed=13, wet_ratio_valid>=0.08)",
+  "created_from_summary_path": "experiments/eval_confmask_thr008_splitquality_stress_repeat/split_repeat_summary_5seed.json",
+  "created_from": {
+    "split_repeat_summary": "experiments/eval_confmask_thr008_splitquality_stress_repeat/split_repeat_summary_5seed.json",
+    "stress_selected_splits": "experiments/eval_confmask_split_quality_stress/thr008_stress_c24_r1024_selected_splits.json",
+    "threshold_json": "experiments/eval_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed13/E02_head_only_posw_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed13_best_val_threshold.json",
+    "val_metrics_raw": "experiments/eval_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed13/E02_head_only_posw_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed13_val_metrics_raw.json",
+    "val_metrics_calibrated": "experiments/eval_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed13/E02_head_only_posw_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed13_val_metrics_calibrated.json",
+    "test_metrics_raw": "experiments/eval_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed13/E02_head_only_posw_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed13_test_metrics_raw.json",
+    "test_metrics_calibrated": "experiments/eval_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed13/E02_head_only_posw_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed13_test_metrics_calibrated.json",
+    "fullscene_policy_sample": "experiments/eval_confmask_thr008_splitquality_stress_repeat/fullscene_threshold_policy_sampled/fullscene_threshold_sanity_summary.json",
+    "fullscene_area_cap_sweep": "experiments/eval_confmask_thr008_splitquality_stress_repeat/fullscene_area_cap_sweep_sampled/fullscene_threshold_sanity_summary.json"
+  },
+  "evaluation": {
+    "selection_basis": "Best balanced HyperSIGMA stress-selected confmask candidate for GUI inspection: strongest ROC-AUC/PR-AUC/oracle F1 among the high-F1 repeat seeds, with less raw score saturation than the seed42 high-saturation case. Seed7 has a slightly higher tiny-test F1, but weaker ranking metrics.",
+    "seed": 13,
+    "patch_level": {
+      "threshold_policy": "val_f1_tuned",
+      "test_roc_auc": 0.8333333333333335,
+      "test_pr_auc": 0.7999999999999999,
+      "test_f1": 0.7692307692307693,
+      "test_oracle_f1": 0.8571428571428571,
+      "transfer_gap": -0.08791208791208782
+    },
+    "calibration": {
+      "method": "validation_only_temperature_scaling",
+      "best_temperature": 54.598150033144236
+    },
+    "fullscene_sampled": {
+      "val_f1_tuned_positive_rate": 0.9423158021567565,
+      "area_cap_10_threshold": 0.4734258055686951,
+      "area_cap_10_positive_rate": 0.0990119886740165,
+      "area_cap_10_precision": 0.06419227258898692,
+      "area_cap_10_recall": 0.07947269303201507,
+      "note": "Patch-level best candidate. Full-scene extent/localization remains research-only and is not production-frozen."
+    }
+  },
+  "notes": "Research-only GUI trial profile for the current best-performing HyperSIGMA confmask checkpoint. It intentionally does not replace the frozen hypersigma_v3_calibrated production-candidate profile."
+}

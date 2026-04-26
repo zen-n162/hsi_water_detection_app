@@ -3,6 +3,7 @@ import type { AppMode } from '../lib/runtime';
 type Props = {
   appMode: AppMode;
   deviceOptions: string[];
+  showModelTypeInput: boolean;
   showServerPathInputs: boolean;
   showDeployConfigInput: boolean;
   showAdvancedOverrides: boolean;
@@ -22,6 +23,10 @@ type Props = {
   setHsiFile: (f: File | null) => void;
   wavelengthFile: File | null;
   setWavelengthFile: (f: File | null) => void;
+  labelFile: File | null;
+  setLabelFile: (f: File | null) => void;
+  maskFile: File | null;
+  setMaskFile: (f: File | null) => void;
   modelCheckpoint: string;
   setModelCheckpoint: (v: string) => void;
   temperatureJson: string;
@@ -45,9 +50,11 @@ type Props = {
 
 export default function SidebarControls(props: Props) {
   const runtimeNote =
-    props.appMode === 'public'
-      ? 'Public mode is upload-first. Server-side file paths and deploy profile overrides are hidden by default.'
-      : 'Local mode keeps server-side paths and deploy profile overrides available for development.';
+    props.appMode === 'local_gpu_web'
+      ? 'Netlify calls the owner-operated GPU backend through a secure tunnel. Local file-path inputs and deploy-profile overrides stay locked.'
+      : props.appMode === 'public'
+        ? 'Public mode is upload-first. Server-side file paths and deploy profile overrides are hidden by default.'
+        : 'Local mode keeps server-side paths and deploy profile overrides available for development.';
 
   return (
     <div className="sidebar-controls">
@@ -101,6 +108,24 @@ export default function SidebarControls(props: Props) {
       </label>
 
       <label className="field">
+        <span>Evaluation label</span>
+        <input
+          type="file"
+          accept=".tif,.tiff,.npy"
+          onChange={(e) => props.setLabelFile(e.target.files?.[0] || null)}
+        />
+      </label>
+
+      <label className="field">
+        <span>Inference / evaluation mask</span>
+        <input
+          type="file"
+          accept=".tif,.tiff,.npy"
+          onChange={(e) => props.setMaskFile(e.target.files?.[0] || null)}
+        />
+      </label>
+
+      <label className="field">
         <span>Sensor</span>
         <select value={props.sensor} onChange={(e) => props.setSensor(e.target.value)}>
           <option value="hyperion">hyperion</option>
@@ -118,13 +143,19 @@ export default function SidebarControls(props: Props) {
         </select>
       </label>
 
-      <label className="field">
-        <span>Model type</span>
-        <select value={props.modelType} onChange={(e) => props.setModelType(e.target.value)}>
-          <option value="ss">ss</option>
-          <option value="sa">sa</option>
-        </select>
-      </label>
+      {props.showModelTypeInput ? (
+        <label className="field">
+          <span>Model type</span>
+          <select value={props.modelType} onChange={(e) => props.setModelType(e.target.value)}>
+            <option value="ss">ss</option>
+            <option value="sa">sa</option>
+          </select>
+        </label>
+      ) : (
+        <div className="field-note">
+          <strong>Model type:</strong> {props.modelType}
+        </div>
+      )}
 
       {props.showDeployConfigInput ? (
         <label className="field">

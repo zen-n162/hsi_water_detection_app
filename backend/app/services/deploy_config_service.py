@@ -28,6 +28,34 @@ _REFERENCE_MODEL_PATH_KEYS = {
     "threshold_json",
     "metrics_json",
 }
+_PUBLIC_DEPLOY_KEYS = {
+    "deploy_name",
+    "deploy_config_version",
+    "runtime_profile",
+    "run_name",
+    "model_type",
+    "threshold",
+    "patch_size",
+    "stride",
+    "band_count",
+    "sensor",
+    "split_policy",
+    "notes",
+}
+_PUBLIC_REFERENCE_MODEL_KEYS = {
+    "role",
+    "model_type",
+    "threshold",
+    "notes",
+}
+_STATUS_PATH_KEYS = (
+    "model_checkpoint",
+    "temperature_json",
+    "manifest_path",
+    "dataset_path",
+    "spat_checkpoint",
+    "spec_checkpoint",
+)
 
 
 def _resolve_project_path(path_value: str | None) -> str | None:
@@ -49,6 +77,90 @@ def _resolve_nested_paths(obj: dict[str, Any], keys: set[str]) -> dict[str, Any]
 
 def _load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def to_safe_path_label(path_value: str | Path | None) -> str | None:
+    if path_value in {None, ""}:
+        return None
+
+    path = Path(path_value).expanduser()
+    if not path.is_absolute():
+        return str(path)
+
+    try:
+        return str(path.resolve().relative_to(PROJECT_ROOT.resolve()))
+    except Exception:
+        return path.name
+
+
+def make_public_deploy_summary(config: dict[str, Any]) -> dict[str, Any]:
+    summary = {key: config[key] for key in _PUBLIC_DEPLOY_KEYS if key in config}
+
+    reference_models = config.get("reference_models") or {}
+    if reference_models:
+        summary["reference_models"] = {
+            name: {
+                key: model_cfg[key]
+                for key in _PUBLIC_REFERENCE_MODEL_KEYS
+                if key in model_cfg
+            }
+            for name, model_cfg in reference_models.items()
+        }
+
+    return summary
+
+
+def _format_status_path(path_value: str | None, *, safe: bool) -> str | None:
+    if not path_value:
+        return None
+    return to_safe_path_label(path_value) if safe else path_value
+
+
+def build_deploy_asset_status(
+    resolved_config: dict[str, Any],
+    *,
+    safe_paths: bool,
+) -> dict[str, Any]:
+    assets: dict[str, Any] = {}
+
+    for key in _STATUS_PATH_KEYS:
+        path_value = resolved_config.get(key)
+        if not path_value:
+            continue
+        path = Path(path_value)
+        assets[key] = {
+            "configured": True,
+            "exists": path.exists(),
+            "path": _format_status_path(str(path), safe=safe_paths),
+        }
+
+    model_ready = False
+    if "model_checkpoint" in assets:
+        model_ready = assets["model_checkpoint"]["exists"]
+    elif "spat_checkpoint" in assets or "spec_checkpoint" in assets:
+        model_ready = assets.get("spat_checkpoint", {}).get("exists", False) and assets.get(
+            "spec_checkpoint", {}
+        ).get("exists", False)
+
+    calibration_ready = True
+    if "temperature_json" in assets:
+        calibration_ready = assets["temperature_json"]["exists"]
+
+    supporting_assets_ready = all(
+        assets[key]["exists"]
+        for key in ("manifest_path", "dataset_path")
+        if key in assets
+    )
+    missing_assets = [key for key, meta in assets.items() if meta.get("configured") and not meta.get("exists")]
+
+    return {
+        "ready_for_inference": model_ready and calibration_ready and supporting_assets_ready,
+        "model_ready": model_ready,
+        "calibration_ready": calibration_ready,
+        "supporting_assets_ready": supporting_assets_ready,
+        "missing_assets": missing_assets,
+        "assets": assets,
+    }
 
 
 def load_deploy_config_bundle(deploy_config_path: str | None = None) -> dict[str, Any]:
@@ -111,21 +223,49 @@ def load_deploy_config_bundle(deploy_config_path: str | None = None) -> dict[str
 
 def make_deploy_config_response(deploy_config_path: str | None = None) -> dict[str, Any]:
     bundle = load_deploy_config_bundle(deploy_config_path=deploy_config_path)
-    resolved = bundle["resolved"]
     settings = get_settings()
+    resolved = bundle["resolved"]
+    asset_status = build_deploy_asset_status(
+        resolved,
+        safe_paths=settings.is_external_web_mode,
+    )
+
+    if settings.is_external_web_mode:
+        deploy_config = make_public_deploy_summary(bundle["deploy_config"])
+        resolved_payload = make_public_deploy_summary(resolved)
+        reference_models = resolved_payload.get("reference_models", {})
+        runtime_overrides = {}
+        if settings.threshold_override is not None:
+            runtime_overrides["threshold"] = settings.threshold_override
+    else:
+        deploy_config = bundle["deploy_config"]
+        resolved_payload = resolved
+        reference_models = resolved.get("reference_models", {})
+        runtime_overrides = bundle.get("runtime_overrides", {})
+
     return {
-        "deploy_config_path": bundle["deploy_config_path"],
+        "deploy_config_path": (
+            to_safe_path_label(bundle["deploy_config_path"])
+            if settings.is_external_web_mode
+            else bundle["deploy_config_path"]
+        ),
         "deploy_config_relative": bundle["deploy_config_relative"],
-        "deploy_config": bundle["deploy_config"],
-        "resolved": resolved,
-        "reference_models": resolved.get("reference_models", {}),
-        "runtime_overrides": bundle.get("runtime_overrides", {}),
+        "deploy_config": deploy_config,
+        "resolved": resolved_payload,
+        "reference_models": reference_models,
+        "runtime_overrides": runtime_overrides,
+        "asset_status": asset_status,
         "runtime": {
             "app_mode": settings.app_mode,
-            "runtime_root": str(settings.runtime_root),
+            "runtime_root": to_safe_path_label(settings.runtime_root),
             "allow_server_file_paths": settings.allow_server_file_paths,
             "allow_deploy_config_override": settings.allow_deploy_config_override,
-            "output_root": str(settings.output_root),
+            "output_root": to_safe_path_label(settings.output_root),
             "output_url_prefix": settings.output_url_prefix,
+            "public_base_url": settings.public_base_url,
+            "default_device": settings.default_device,
+            "provenance_visibility": (
+                "public_safe" if settings.is_external_web_mode else "full_internal"
+            ),
         },
     }

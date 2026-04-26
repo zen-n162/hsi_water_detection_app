@@ -45,11 +45,21 @@ export default function RoiPage({ preview, roi, setRoi, onRunInference, busyInfe
     const img = imgRef.current;
     if (!img || !width || !height) return null;
     const rect = img.getBoundingClientRect();
-    const x = Math.min(Math.max(clientX - rect.left, 0), rect.width);
-    const y = Math.min(Math.max(clientY - rect.top, 0), rect.height);
+    if (rect.width <= 0 || rect.height <= 0) return null;
+    const x = Math.min(Math.max(clientX - rect.left, 0), Math.max(rect.width - 0.001, 0));
+    const y = Math.min(Math.max(clientY - rect.top, 0), Math.max(rect.height - 0.001, 0));
     return {
-      col: Math.round((x / rect.width) * width),
-      row: Math.round((y / rect.height) * height),
+      col: Math.min(width - 1, Math.max(0, Math.floor((x / rect.width) * width))),
+      row: Math.min(height - 1, Math.max(0, Math.floor((y / rect.height) * height))),
+    };
+  }
+
+  function roiFromPoints(a: { x: number; y: number }, b: { x: number; y: number }): RoiRect {
+    return {
+      colStart: Math.min(a.x, b.x),
+      colStop: Math.min(width, Math.max(a.x, b.x) + 1),
+      rowStart: Math.min(a.y, b.y),
+      rowStop: Math.min(height, Math.max(a.y, b.y) + 1),
     };
   }
 
@@ -58,24 +68,14 @@ export default function RoiPage({ preview, roi, setRoi, onRunInference, busyInfe
     if (!pt) return;
     setDragging(true);
     setAnchor({ x: pt.col, y: pt.row });
-    setRoi({
-      colStart: pt.col,
-      colStop: Math.min(width, pt.col + 1),
-      rowStart: pt.row,
-      rowStop: Math.min(height, pt.row + 1),
-    });
+    setRoi(roiFromPoints({ x: pt.col, y: pt.row }, { x: pt.col, y: pt.row }));
   }
 
   function moveDrag(clientX: number, clientY: number) {
     if (!dragging || !anchor) return;
     const pt = toPixelCoords(clientX, clientY);
     if (!pt) return;
-    setRoi({
-      colStart: Math.min(anchor.x, pt.col),
-      colStop: Math.max(anchor.x, pt.col),
-      rowStart: Math.min(anchor.y, pt.row),
-      rowStop: Math.max(anchor.y, pt.row),
-    });
+    setRoi(roiFromPoints(anchor, { x: pt.col, y: pt.row }));
   }
 
   function endDrag() {
@@ -96,20 +96,32 @@ export default function RoiPage({ preview, roi, setRoi, onRunInference, busyInfe
         {preview?.grayscalePreviewUrl ? (
           <div
             className="roi-canvas"
-            onMouseDown={(e) => beginDrag(e.clientX, e.clientY)}
-            onMouseMove={(e) => moveDrag(e.clientX, e.clientY)}
-            onMouseUp={endDrag}
-            onMouseLeave={endDrag}
           >
-            <img
-              ref={imgRef}
-              src={preview.grayscalePreviewUrl}
-              alt="ROI preview"
-              onError={() => {
-                console.error('[ROI preview image load failed]', preview.grayscalePreviewUrl);
+            <div
+              className="roi-image-frame"
+              onPointerDown={(e) => {
+                e.currentTarget.setPointerCapture(e.pointerId);
+                beginDrag(e.clientX, e.clientY);
               }}
-            />
-            {box ? <div className="roi-box" style={box} /> : null}
+              onPointerMove={(e) => moveDrag(e.clientX, e.clientY)}
+              onPointerUp={(e) => {
+                if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+                  e.currentTarget.releasePointerCapture(e.pointerId);
+                }
+                endDrag();
+              }}
+              onPointerCancel={endDrag}
+            >
+              <img
+                ref={imgRef}
+                src={preview.grayscalePreviewUrl}
+                alt="ROI preview"
+                onError={() => {
+                  console.error('[ROI preview image load failed]', preview.grayscalePreviewUrl);
+                }}
+              />
+              {box ? <div className="roi-box" style={box} /> : null}
+            </div>
           </div>
         ) : (
           <div className="empty-panel">
