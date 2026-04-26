@@ -1,0 +1,18 @@
+{
+  "runs": [
+    {
+      "seed": 13,
+      "model_checkpoint": "experiments/runs_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed13/E03_head_only_confidence_bce_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed13/model_best.pt",
+      "temperature_json": "experiments/runs_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed13/E03_head_only_confidence_bce_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed13/temperature_scaling_val.json",
+      "threshold_json": "experiments/eval_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed13/E03_head_only_confidence_bce_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed13_best_val_threshold.json",
+      "note": "E03 confidence_bce head-only full-scene gate candidate; seed13"
+    },
+    {
+      "seed": 99,
+      "model_checkpoint": "experiments/runs_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed99/E03_head_only_confidence_bce_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed99/model_best.pt",
+      "temperature_json": "experiments/runs_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed99/E03_head_only_confidence_bce_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed99/temperature_scaling_val.json",
+      "threshold_json": "experiments/eval_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed99/E03_head_only_confidence_bce_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed99_best_val_threshold.json",
+      "note": "E03 confidence_bce head-only full-scene gate candidate; seed99"
+    }
+  ]
+}

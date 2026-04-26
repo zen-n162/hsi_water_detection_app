@@ -42,6 +42,7 @@ experiments/eval_v2/
 experiments/runs/
 experiments/runs_v2/
 experiments/runs_v3/**/*.pt
+experiments/runs_confmask*/**/*.pt
 experiments/**/raw_probability_map.npy
 experiments/**/calibrated_probability_map.npy
 

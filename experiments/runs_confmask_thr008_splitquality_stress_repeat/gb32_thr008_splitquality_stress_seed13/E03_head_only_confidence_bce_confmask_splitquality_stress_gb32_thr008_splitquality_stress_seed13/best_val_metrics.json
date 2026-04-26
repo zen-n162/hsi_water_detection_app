@@ -1,0 +1,182 @@
+{
+  "split": "val",
+  "n_samples": 8,
+  "wet": 4,
+  "dry": 4,
+  "threshold": 0.5,
+  "roc_auc": 0.8125,
+  "pr_auc": 0.8041666666666667,
+  "precision": 0.0,
+  "recall": 0.0,
+  "f1": 0.0,
+  "confusion_matrix": [
+    [
+      4,
+      0
+    ],
+    [
+      4,
+      0
+    ]
+  ],
+  "score_distribution": {
+    "min": 2.2149906726554036e-05,
+    "max": 0.019893787801265717,
+    "mean": 0.0038112448528409004,
+    "std": 0.006460781674832106,
+    "q05": 3.5403776564635336e-05,
+    "q50": 0.0006027027848176658,
+    "q95": 0.015410997904837132,
+    "frac_le_0_01": 0.875,
+    "frac_ge_0_99": 0.0,
+    "frac_le_0_05": 1.0,
+    "frac_ge_0_95": 0.0
+  },
+  "samples": [
+    {
+      "file": "confmask_gb_00028.npz",
+      "path": "datasets/processed/wetness_pretrain_confmask_gb32_thr008_splitquality_stress_seed13/confmask_gb_00028.npz",
+      "sample_id": "confmask_gb_00028",
+      "split": "val",
+      "label_name": "wet",
+      "confidence": 0.37349700927734375,
+      "confidence_tier": 1.0,
+      "valid_ratio": 0.9047849774360657,
+      "wet_ratio_valid": 0.08742599934339523,
+      "y_true": 1,
+      "y_score": 0.019893787801265717,
+      "y_pred": 0
+    },
+    {
+      "file": "confmask_gb_00075.npz",
+      "path": "datasets/processed/wetness_pretrain_confmask_gb32_thr008_splitquality_stress_seed13/confmask_gb_00075.npz",
+      "sample_id": "confmask_gb_00075",
+      "split": "val",
+      "label_name": "wet",
+      "confidence": 0.3901509940624237,
+      "confidence_tier": 1.0,
+      "valid_ratio": 0.9997559785842896,
+      "wet_ratio_valid": 0.11379700154066086,
+      "y_true": 1,
+      "y_score": 0.0007506214315071702,
+      "y_pred": 0
+    },
+    {
+      "file": "confmask_gb_00076.npz",
+      "path": "datasets/processed/wetness_pretrain_confmask_gb32_thr008_splitquality_stress_seed13/confmask_gb_00076.npz",
+      "sample_id": "confmask_gb_00076",
+      "split": "val",
+      "label_name": "wet",
+      "confidence": 0.3556619882583618,
+      "confidence_tier": 3.0,
+      "valid_ratio": 0.9877930283546448,
+      "wet_ratio_valid": 0.14260999858379364,
+      "y_true": 1,
+      "y_score": 0.0017903604311868548,
+      "y_pred": 0
+    },
+    {
+      "file": "confmask_gb_00077.npz",
+      "path": "datasets/processed/wetness_pretrain_confmask_gb32_thr008_splitquality_stress_seed13/confmask_gb_00077.npz",
+      "sample_id": "confmask_gb_00077",
+      "split": "val",
+      "label_name": "wet",
+      "confidence": 0.3271520137786865,
+      "confidence_tier": 3.0,
+      "valid_ratio": 0.9909669756889343,
+      "wet_ratio_valid": 0.11111100018024445,
+      "y_true": 1,
+      "y_score": 0.000454784109024331,
+      "y_pred": 0
+    },
+    {
+      "file": "confmask_gb_00078.npz",
+      "path": "datasets/processed/wetness_pretrain_confmask_gb32_thr008_splitquality_stress_seed13/confmask_gb_00078.npz",
+      "sample_id": "confmask_gb_00078",
+      "split": "val",
+      "label_name": "dry",
+      "confidence": 0.9794920086860657,
+      "confidence_tier": 1.0,
+      "valid_ratio": 1.0,
+      "wet_ratio_valid": 0.020508000627160072,
+      "y_true": 0,
+      "y_score": 6.0018104704795405e-05,
+      "y_pred": 0
+    },
+    {
+      "file": "confmask_gb_00079.npz",
+      "path": "datasets/processed/wetness_pretrain_confmask_gb32_thr008_splitquality_stress_seed13/confmask_gb_00079.npz",
+      "sample_id": "confmask_gb_00079",
+      "split": "val",
+      "label_name": "dry",
+      "confidence": 0.9802250266075134,
+      "confidence_tier": 1.0,
+      "valid_ratio": 0.9938960075378418,
+      "wet_ratio_valid": 0.013756000436842442,
+      "y_true": 0,
+      "y_score": 0.0004324240726418793,
+      "y_pred": 0
+    },
+    {
+      "file": "confmask_gb_00080.npz",
+      "path": "datasets/processed/wetness_pretrain_confmask_gb32_thr008_splitquality_stress_seed13/confmask_gb_00080.npz",
+      "sample_id": "confmask_gb_00080",
+      "split": "val",
+      "label_name": "dry",
+      "confidence": 0.9489750266075134,
+      "confidence_tier": 1.0,
+      "valid_ratio": 0.9943850040435791,
+      "wet_ratio_valid": 0.045667000114917755,
+      "y_true": 0,
+      "y_score": 2.2149906726554036e-05,
+      "y_pred": 0
+    },
+    {
+      "file": "confmask_gb_00081.npz",
+      "path": "datasets/processed/wetness_pretrain_confmask_gb32_thr008_splitquality_stress_seed13/confmask_gb_00081.npz",
+      "sample_id": "confmask_gb_00081",
+      "split": "val",
+      "label_name": "dry",
+      "confidence": 0.9182130098342896,
+      "confidence_tier": 1.0,
+      "valid_ratio": 0.9384769797325134,
+      "wet_ratio_valid": 0.021592000499367714,
+      "y_true": 0,
+      "y_score": 0.007085812743753195,
+      "y_pred": 0
+    }
+  ],
+  "dataset_info": {
+    "manifest_path": "/home/zennakamura/MasterResearch/hsi_water_detection_app/annotations/manifests/split_quality_stress/thr008_stress_c24_r1024_constrained_base13_cand0.csv",
+    "input_dir": "/home/zennakamura/MasterResearch/hsi_water_detection_app/datasets/processed/wetness_pretrain_confmask_gb32_thr008_splitquality_stress_seed13",
+    "train_split": "train",
+    "val_split": "val",
+    "eval_split": "test",
+    "train_samples": 63,
+    "val_samples": 8,
+    "train_label_counts": {
+      "dry": 29,
+      "wet": 34
+    },
+    "val_label_counts": {
+      "wet": 4,
+      "dry": 4
+    },
+    "source": "confidence_ali.tif + final_valid_mask_clean_ali_aoi90.tif",
+    "sensor": "hyperion",
+    "split_policy": "spatial_block",
+    "guard_band": 32.0,
+    "pos_weight_value": 1.0,
+    "pos_weight_mode": "auto",
+    "requested_split": "val"
+  },
+  "model_info": {
+    "model_type": "ss",
+    "model_checkpoint": null,
+    "spat_checkpoint": "/home/zennakamura/MasterResearch/HyperSIGMA/HyperspectralDetection/spat-vit-b-checkpoint-1599.pth",
+    "spec_checkpoint": "/home/zennakamura/MasterResearch/HyperSIGMA/HyperspectralDetection/spec-vit-b-checkpoint-1599.pth",
+    "device": "cuda",
+    "patch_size": 64,
+    "in_channels": 170
+  }
+}

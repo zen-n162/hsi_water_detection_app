@@ -1,0 +1,126 @@
+{
+  "source_metrics_json": "/home/zennakamura/MasterResearch/hsi_water_detection_app/experiments/eval_confmask_thr008_splitquality_stress_repeat/gb32_thr008_splitquality_stress_seed99/E03_head_only_confidence_bce_confmask_splitquality_stress_gb32_thr008_splitquality_stress_seed99_val_metrics_raw.json",
+  "best_temperature": 8.331137487687693,
+  "best_nll": 0.6123196838702416,
+  "fit_split": "val",
+  "threshold_for_report": 0.5,
+  "n_samples": 12,
+  "before": {
+    "roc_auc": 0.8333333333333334,
+    "pr_auc": 0.8416666666666666,
+    "precision": 0.6666666666666666,
+    "recall": 1.0,
+    "f1": 0.8,
+    "confusion_matrix": [
+      [
+        3,
+        3
+      ],
+      [
+        0,
+        6
+      ]
+    ],
+    "score_distribution": {
+      "min": 0.1011712399960512,
+      "max": 0.9999865345145925,
+      "mean": 0.7919754084877099,
+      "std": 0.35598105900197025,
+      "q05": 0.14189145900895056,
+      "q50": 0.9986152163589312,
+      "q95": 0.9999863871711171,
+      "frac_le_0_01": 0.0,
+      "frac_ge_0_99": 0.6666666666666666,
+      "frac_le_0_05": 0.0,
+      "frac_ge_0_95": 0.75
+    },
+    "brier_score": 0.2576876709129108,
+    "ece": 0.2919754084877098,
+    "score_histogram": {
+      "counts": [
+        0,
+        2,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        9
+      ],
+      "edges": [
+        0.0,
+        0.1,
+        0.2,
+        0.30000000000000004,
+        0.4,
+        0.5,
+        0.6000000000000001,
+        0.7000000000000001,
+        0.8,
+        0.9,
+        1.0
+      ]
+    }
+  },
+  "after": {
+    "roc_auc": 0.8333333333333334,
+    "pr_auc": 0.8416666666666666,
+    "precision": 0.6666666666666666,
+    "recall": 1.0,
+    "f1": 0.8,
+    "confusion_matrix": [
+      [
+        3,
+        3
+      ],
+      [
+        0,
+        6
+      ]
+    ],
+    "score_distribution": {
+      "min": 0.43482729031055994,
+      "max": 0.7935074842453257,
+      "mean": 0.6506609223942106,
+      "std": 0.12558527607057463,
+      "q05": 0.4451778636130472,
+      "q50": 0.6918298286197364,
+      "q95": 0.7932942375129343,
+      "frac_le_0_01": 0.0,
+      "frac_ge_0_99": 0.0,
+      "frac_le_0_05": 0.0,
+      "frac_ge_0_95": 0.0
+    },
+    "brier_score": 0.2118392211529894,
+    "ece": 0.23225599763459076,
+    "score_histogram": {
+      "counts": [
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        3,
+        6,
+        0,
+        0
+      ],
+      "edges": [
+        0.0,
+        0.1,
+        0.2,
+        0.30000000000000004,
+        0.4,
+        0.5,
+        0.6000000000000001,
+        0.7000000000000001,
+        0.8,
+        0.9,
+        1.0
+      ]
+    }
+  }
+}
